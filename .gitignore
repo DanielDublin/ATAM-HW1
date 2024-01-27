@@ -260,3 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 /HW1/HW1.vcxproj
+/HW1
+/out/build/x64-Debug
