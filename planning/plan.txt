@@ -1,0 +1,68 @@
+project restrictions:
+
+100 processes
+50 char for name of each process
+
+
+special phrases >, >>, &, |
+
+do
+commands.c
+add signal handling - handlement in signals cpp
+
+behavior:
+always wait for commands
+there are 2 types fo commands - built in and external
+built-in error: smash error:> ``comand-line``
+errors will cause an error message and abort of the execution and returning to shell
+
+Assumptions:
+command size is 80
+args is up to 20
+spaces is a drag
+
+
+
+built-in:
+foreground self execution no fork
+
+
+
+external:
+multiprocessing (fork->execv)
+also important do setpgrp(); at child process
+job_id (is not proccess id)
+
+the job can run in the background or foreground 
+if ran in foreground the shell will beblocked
+if ran in background we can add more commands while its executing (determined by & at the end of the command)
+
+
+
+Special commands:
+IO redicretion > and >>
+
+
+
+job list:
+remove finished jobs from list before executing commands, before printing jobs, before adding new jobs
+job_id = max job existing +1
+
+
+
+SIGNALS:
+Catching ctrl+c  - SIGINT
+handlement -> sigkill to the current process that is running in the foreground but NOT CRASH SMASH, the signal wont be sent if there is no foreground process running
+job should print foreground PID
+
+
+
+Exceptions -error list:
+first error will be printed
+perror() -> perror()
+
+red error will be sent to cerr and not cout
+
+smash: got ctrl-C
+
+
