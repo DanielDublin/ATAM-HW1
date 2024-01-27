@@ -71,12 +71,13 @@ class ShowPidCommand : public BuiltInCommand {
 
 class JobsList;
 class QuitCommand : public BuiltInCommand {
-// TODO: Add your data members
-public:
+// TODO: Add your data members public:
   QuitCommand(const char* cmd_line, JobsList* jobs);
   virtual ~QuitCommand() {}
   void execute() override;
 };
+
+
 
 
 class JobsList {
@@ -107,6 +108,14 @@ class JobsCommand : public BuiltInCommand {
   void execute() override;
 };
 
+class KillCommand : public BuiltInCommand {
+ // TODO: Add your data members
+ public:
+  KillCommand(const char* cmd_line, JobsList* jobs);
+  virtual ~KillCommand() {}
+  void execute() override;
+};
+
 class ForegroundCommand : public BuiltInCommand {
  // TODO: Add your data members
  public:
@@ -115,54 +124,13 @@ class ForegroundCommand : public BuiltInCommand {
   void execute() override;
 };
 
-class BackgroundCommand : public BuiltInCommand {
- // TODO: Add your data members
- public:
-  BackgroundCommand(const char* cmd_line, JobsList* jobs);
-  virtual ~BackgroundCommand() {}
-  void execute() override;
-};
-
-class TimeoutCommand : public BuiltInCommand {
-/* Bonus */
-// TODO: Add your data members
- public:
-  explicit TimeoutCommand(const char* cmd_line);
-  virtual ~TimeoutCommand() {}
-  void execute() override;
-};
-
 class ChmodCommand : public BuiltInCommand {
-  // TODO: Add your data members
  public:
   ChmodCommand(const char* cmd_line);
   virtual ~ChmodCommand() {}
   void execute() override;
 };
 
-class GetFileTypeCommand : public BuiltInCommand {
-  // TODO: Add your data members
- public:
-  GetFileTypeCommand(const char* cmd_line);
-  virtual ~GetFileTypeCommand() {}
-  void execute() override;
-};
-
-class SetcoreCommand : public BuiltInCommand {
-  // TODO: Add your data members
- public:
-  SetcoreCommand(const char* cmd_line);
-  virtual ~SetcoreCommand() {}
-  void execute() override;
-};
-
-class KillCommand : public BuiltInCommand {
- // TODO: Add your data members
- public:
-  KillCommand(const char* cmd_line, JobsList* jobs);
-  virtual ~KillCommand() {}
-  void execute() override;
-};
 
 class SmallShell {
  private:

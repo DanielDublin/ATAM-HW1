@@ -9,8 +9,6 @@
 
 using namespace std;
 
-const std::string WHITESPACE = " \n\r\t\f\v";
-
 #if 0
 #define FUNC_ENTRY()  \
   cout << __PRETTY_FUNCTION__ << " --> " << endl;
