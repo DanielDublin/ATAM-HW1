@@ -4,7 +4,7 @@ project restrictions:
 50 char for name of each process
 
 
-special phrases >, >>, &, |, *, ?, <, <<
+special phrases >, >>, &, |, *, ?
 
 do
 commands.c
@@ -40,7 +40,8 @@ if ran in background we can add more commands while its executing (determined by
 
 
 Special commands:
-IO redicretion > and >>
+IO redicretion > and >> 
+up to one (may and may not have spaces around them)
 
 
 
