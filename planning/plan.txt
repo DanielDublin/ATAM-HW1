@@ -4,7 +4,7 @@ project restrictions:
 50 char for name of each process
 
 
-special phrases >, >>, &, |
+special phrases >, >>, &, |, *, ?, <, <<
 
 do
 commands.c
