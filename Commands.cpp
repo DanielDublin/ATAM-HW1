@@ -15,7 +15,7 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
 {
     int first_whitespace_index = input.find_first_not_of(WHITESPACE);
     int last_whitespace_index = input.find_last_not_of(WHITESPACE);
-    this->is_background = input.back() == '&';
+    this->is_background = input[last_whitespace_index] == '&';
     this->is_complex = (input.find_first_of(COMPLEX_CHAR) != string::npos);
 
     if (this->is_background && last_whitespace_index != string::npos)
