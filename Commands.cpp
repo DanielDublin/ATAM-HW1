@@ -62,18 +62,16 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
         this->stripped_flagless_command = this->stripped_flagless_command.substr(new_index);
     }
 
+
+    // handling command based cases for stripping and inits
     int redirection_index = input.find(">>");
     if (redirection_index != string::npos)
     {
-        int new_index = redirection_index;
-        this->first_command = cleanBackgroundCommand(input.substr(0, new_index));
-        this->second_command = input.substr(new_index + 2);
+        this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
+        this->second_command = input.substr(redirection_index + 2);
         auto second_command_startpoint = this->second_command.find_first_not_of(WHITESPACE);
-        if (second_command_startpoint == string::npos)
-        {
-            this->redirection = this->REDIRECTION_FAIL;
-        }
-        else
+
+        if (second_command_startpoint != string::npos)
         {
             this->second_command = this->second_command.substr(second_command_startpoint);
             auto second_command_endpoint = this->second_command.find_first_of(WHITESPACE);
@@ -82,20 +80,22 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
                 this->second_command = this->second_command.substr(0, second_command_endpoint);
             }
             this->redirection = this->APPEND;
+            
         }
-    }
-    else if ((redirection_index = input.find(">")) != string::npos)
-    {
-        int new_index = redirection_index;
-        this->first_command = cleanBackgroundCommand(input.substr(0, new_index));
-        this->second_command = input.substr(new_index + 1);
-
-        auto second_command_startpoint = this->second_command.find_first_not_of(WHITESPACE);
-        if (second_command_startpoint == string::npos)
+        else
         {
             this->redirection = this->REDIRECTION_FAIL;
         }
-        else
+    }
+
+    redirection_index = input.find(">");
+    if ((redirection_index = input.find(">")) != string::npos)
+    {
+        this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
+        this->second_command = input.substr(redirection_index + 1);
+
+        auto second_command_startpoint = this->second_command.find_first_not_of(WHITESPACE);
+        if (second_command_startpoint != string::npos)
         {
             this->second_command = this->second_command.substr(second_command_startpoint);
             auto second_command_endpoint = this->second_command.find_first_of(WHITESPACE);
@@ -104,24 +104,32 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
                 this->second_command = this->second_command.substr(0, second_command_endpoint);
             }
             this->redirection = this->OVERRIDE;
+            
+        }
+        else
+        {
+            this->redirection = this->REDIRECTION_FAIL;
         }
     }
-    else if ((redirection_index = input.find("|&")) != string::npos)
+
+    redirection_index = input.find("|");
+    if (redirection_index != string::npos)
     {
-        int new_index = redirection_index;
-        this->first_command = cleanBackgroundCommand(input.substr(0, new_index));
-        this->second_command = input.substr(new_index + 2);
-        this->redirection = this->ERROR_PIPE;
-    }
-    else if ((redirection_index = input.find("|")) != string::npos)
-    {
-        int new_index = redirection_index;
-        this->first_command = cleanBackgroundCommand(input.substr(0, new_index));
-        this->second_command = input.substr(new_index + 1);
+        this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
+        this->second_command = input.substr(redirection_index + 1);
         this->redirection = this->PIPE;
     }
+    
+    redirection_index = input.find("|&");
+    if (redirection_index != string::npos)
+    {
+        this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
+        this->second_command = input.substr(redirection_index + 2);
+        this->redirection = this->ERROR_PIPE;
+    }
+    
 
-    if (redirection != this->NONE)
+    if (this->redirection != this->NONE)
     {
         this->is_background = false;
     }
@@ -191,3 +199,6 @@ void SmallShell::executeCommand(const char *cmd_line) {
   // cmd->execute();
   // Please note that you must fork smash process for some commands (e.g., external commands....)
 }
+
+
+
