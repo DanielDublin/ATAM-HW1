@@ -328,5 +328,9 @@ Command* SmallShell::CreateCommand(string cmd_line)
 }
 void SmallShell::executeCommand(string cmd_line)
 {
-  CreateCommand(cmd_line)->execute();
+  //should be:
+  //CreateCommand(cmd_line)->execute();
+  //but doing this for testing:
+  cout << "try" << endl;
+  
 }
