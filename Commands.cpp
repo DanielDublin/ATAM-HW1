@@ -221,16 +221,16 @@ SmallShell::SmallShell() {
 SmallShell::~SmallShell() {
 // TODO: add your implementation
 }
-*/
 
 
-/*
-/**
-* Creates and returns a pointer to Command class which matches the given command line (cmd_line)
-/*
+
+
+
+Creates and returns a pointer to Command class which matches the given command line (cmd_line)
+
 Command * SmallShell::CreateCommand(const char* cmd_line) {
 	// For example:
-/*
+
   string cmd_s = _trim(string(cmd_line));
   string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
 
