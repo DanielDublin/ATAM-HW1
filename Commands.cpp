@@ -7,76 +7,144 @@
 #include <iomanip>
 #include "Commands.h"
 
-using namespace std;
-const std::string WHITESPACE = " \n\r\t\f\v";
 
-#if 0
-#define FUNC_ENTRY()  \
-  cout << __PRETTY_FUNCTION__ << " --> " << endl;
+/*-----------------CommandParser-------------------*/
 
-#define FUNC_EXIT()  \
-  cout << __PRETTY_FUNCTION__ << " <-- " << endl;
-#else
-#define FUNC_ENTRY()
-#define FUNC_EXIT()
-#endif
 
-string _ltrim(const std::string& s)
+CommandParser::CommandParser(std::string input) : raw_command(input), first_command(""), second_command(""), redirection(this->NONE), timeout(0)
 {
-  size_t start = s.find_first_not_of(WHITESPACE);
-  return (start == std::string::npos) ? "" : s.substr(start);
+    this->is_background = input.back() == '&';
+    size_t ide = input.find_last_not_of(WHITESPACE);
+    size_t ids = input.find_first_not_of(WHITESPACE);
+
+    if (ide != std::string::npos && this->is_background)
+    {
+        input = input.substr(ids, ide - ids);
+    }
+    this->stripped_flagless_command = input;
+
+    this->is_complex = (input.find_first_of(COMPLEX_CHAR) != std::string::npos);
+
+    input.push_back(' ');
+    size_t startPos = 0;
+    size_t endPos = 0;
+    int counter = 0;
+
+    for (size_t i = 0; i < input.length(); ++i)
+    {
+        if (input[i] == ' ')
+        {
+            endPos = i;
+            if (i != 0)
+            {
+                this->stripped_words[counter++] = input.substr(startPos, endPos - startPos);
+            }
+            while (input[i] == ' ')
+            {
+                ++i;
+                startPos = i;
+            }
+        }
+    }
+    argAmount = counter;
+
+
+    if (processedInput[0] == "timeout" && counter >= 2)
+    {
+        timeout = std::stoi(processedInput[1]);
+        argAmount -= 2;
+        size_t idx = inputNoBG.find(processedInput[2]);
+        inputNoBG = inputNoBG.substr(idx);
+    }
+
+    auto pos = input.find(">>");
+    if (pos != std::string::npos)
+    {
+        size_t idx = pos;
+        firstCommand = removeBackground(input.substr(0, idx));
+        secondCommand = input.substr(idx + 2);
+        auto secondCommandStart = secondCommand.find_first_not_of(WHITESPACE);
+        if (secondCommandStart == std::string::npos)
+        {
+            redirection = REDIRECTION_FAIL;
+        }
+        else
+        {
+            secondCommand = secondCommand.substr(secondCommandStart);
+            auto secondCommandEnd = secondCommand.find_first_of(WHITESPACE);
+            if (secondCommandEnd != std::string::npos)
+            {
+                secondCommand = secondCommand.substr(0, secondCommandEnd);
+            }
+            redirection = APPEND;
+        }
+    }
+    else if ((pos = input.find(">")) != std::string::npos)
+    {
+        size_t idx = pos;
+        firstCommand = removeBackground(input.substr(0, idx));
+        secondCommand = input.substr(idx + 1);
+        auto secondCommandStart = secondCommand.find_first_not_of(WHITESPACE);
+        if (secondCommandStart == std::string::npos)
+        {
+            redirection = REDIRECTION_FAIL;
+        }
+        else
+        {
+            secondCommand = secondCommand.substr(secondCommandStart);
+            auto secondCommandEnd = secondCommand.find_first_of(WHITESPACE);
+            if (secondCommandEnd != std::string::npos)
+            {
+                secondCommand = secondCommand.substr(0, secondCommandEnd);
+            }
+            redirection = OVERRIDE;
+        }
+    }
+    else if ((pos = input.find("|&")) != std::string::npos)
+    {
+        size_t idx = pos;
+        firstCommand = removeBackground(input.substr(0, idx));
+        secondCommand = input.substr(idx + 2);
+        redirection = ERROR_PIPE;
+    }
+    else if ((pos = input.find("|")) != std::string::npos)
+    {
+        size_t idx = pos;
+        firstCommand = removeBackground(input.substr(0, idx));
+        secondCommand = input.substr(idx + 1);
+        redirection = PIPE;
+    }
+
+    if (redirection != NONE)
+    {
+        isBackground = false;
+    }
 }
 
-string _rtrim(const std::string& s)
+std::string CommandParser::getRawCommanad()
 {
-  size_t end = s.find_last_not_of(WHITESPACE);
-  return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+
+
 }
 
-string _trim(const std::string& s)
-{
-  return _rtrim(_ltrim(s));
-}
 
-int _parseCommandLine(const char* cmd_line, char** args) {
-  FUNC_ENTRY()
-  int i = 0;
-  std::istringstream iss(_trim(string(cmd_line)).c_str());
-  for(std::string s; iss >> s; ) {
-    args[i] = (char*)malloc(s.length()+1);
-    memset(args[i], 0, s.length()+1);
-    strcpy(args[i], s.c_str());
-    args[++i] = NULL;
-  }
-  return i;
+std::string CommandParser::getFirstCommand();
+std::string CommandParser::getSecondCommand();
+std::string CommandParser::getCleanCommand();
 
-  FUNC_EXIT()
-}
+bool CommandParser::getIsBackground();
+bool CommandParser::getIsComplex();
+int CommandParser::getArgCount();
+int CommandParser::getTimeout();
+CommandParser::redirectionType CommandParser::getRedirection();
 
-bool _isBackgroundComamnd(const char* cmd_line) {
-  const string str(cmd_line);
-  return str[str.find_last_not_of(WHITESPACE)] == '&';
-}
+static std::string CommandParser::cleanBackgroundCommand(std::string input);
 
-void _removeBackgroundSign(char* cmd_line) {
-  const string str(cmd_line);
-  // find last character other than spaces
-  unsigned int idx = str.find_last_not_of(WHITESPACE);
-  // if all characters are spaces then return
-  if (idx == string::npos) {
-    return;
-  }
-  // if the command line does not end with & then return
-  if (cmd_line[idx] != '&') {
-    return;
-  }
-  // replace the & (background sign) with space and then remove all tailing spaces.
-  cmd_line[idx] = ' ';
-  // truncate the command line string up to the last non-space character
-  cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
-}
+std::string& CommandParser::operator[](int index);
 
-// TODO: Add your implementation for classes in Commands.h 
+
+
+/
 
 SmallShell::SmallShell() {
 // TODO: add your implementation

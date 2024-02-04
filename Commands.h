@@ -3,15 +3,17 @@
 
 #include <vector>
 
+
 #define COMMAND_ARGS_MAX_LENGTH (80)
 #define COMMAND_MAX_ARGS (20)
 
+using namespace std;
+const std::string WHITESPACE = " \n\r\t\f\v";
+const std::string COMPLEX_CHAR = "?*";
 
 
 /*---------------------CommandParser--------------------------*/
 
-const std::string WHITESPACE = " \n\r\t\f\v";
-const std::string COMPLEX_CHAR = "?*";
 
 class CommandParser
 {
@@ -55,7 +57,7 @@ class CommandParser
         std::string first_command;
         std::string second_command;
         std::string stripped_flagless_command;
-        std::string command_args[MAX_WORD_COUNT];
+        std::string stripped_words[MAX_WORD_COUNT];
         
         redirectionType redirection;
         bool is_background;
