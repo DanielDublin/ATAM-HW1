@@ -1,21 +1,14 @@
-#include "Commands.h"
-
-/////////////////////
-//skeleton, for later use
-/////////////////////
-
-
 #include <iostream>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include "Commands.h"
-//#include "signals.h"
+#include "signals.h"
 
 int main(int argc, char* argv[]) {
-    //if(signal(SIGINT , ctrlCHandler)==SIG_ERR) {
-    //   perror("smash error: failed to set ctrl-C handler");
-   // }
+    if(signal(SIGINT , ctrlCHandler)==SIG_ERR) {
+        perror("smash error: failed to set ctrl-C handler");
+    }
 
     //TODO: setup sig alarm handler
 
