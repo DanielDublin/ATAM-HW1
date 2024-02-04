@@ -44,7 +44,7 @@ Job* JobsList::getJobById(int jobId)
     for(unsigned int i = 0; i < list.size(); i++)
       if (list[i]->getJobID() == jobId)
         j = list[i];
-      return j;
+    return j;
   }
 void JobsList::printJobsList()
   {
