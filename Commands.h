@@ -44,7 +44,6 @@ class CommandParser
         int getTimeout();
         redirectionType getRedirection();
 
-        static std::string cleanBackgroundCommand(std::string input);
 
         std::string& operator[](int index);
 
@@ -64,6 +63,8 @@ class CommandParser
         bool is_complex;
         int arg_count;
         int timeout;
+
+        static std::string cleanBackgroundCommand(std::string input);
 };
 
 

@@ -89,7 +89,7 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
     }
 
     redirection_index = input.find(">");
-    if ((redirection_index = input.find(">")) != string::npos)
+    if (redirection_index != string::npos)
     {
         this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
         this->second_command = input.substr(redirection_index + 1);
@@ -138,22 +138,60 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
 
 string CommandParser::getRawCommanad()
 {
-
-
+    return this->raw_command;
 }
 
 
-string CommandParser::getthis->first_command();
-string CommandParser::getthis->second_command();
-string CommandParser::getCleanCommand();
+string CommandParser::getFirstCommand()
+{
+    return this->first_command;
+}
 
-bool CommandParser::getis_background();
-bool CommandParser::getIsComplex();
-int CommandParser::getArgCount();
-int CommandParser::getTimeout();
+
+string CommandParser::getSecondCommand()
+{
+    return this->second_command;
+}
+
+string CommandParser::getCleanCommand()
+{
+    return this->stripped_flagless_command;
+}
+
+bool CommandParser::getIsBackground()
+{
+    return this->is_background;
+}
+
+
+bool CommandParser::getIsComplex()
+{
+    return this->is_complex;
+}
+
+int CommandParser::getArgCount()
+{
+    return this->arg_count;
+}
+
+int CommandParser::getTimeout()
+{
+    return this->timeout;
+}
+
 CommandParser::redirectionType CommandParser::getRedirection();
 
-static string CommandParser::cleanBackgroundCommand(string input);
+static string CommandParser::cleanBackgroundCommand(string input)
+{
+    bool isBackground = input[input.find_last_not_of(WHITESPACE)] == '&';
+    int ide = input.find_last_not_of(WHITESPACE);
+    int ids = input.find_first_not_of(WHITESPACE);
+    if (ide != (int)std::string::npos && isBackground)
+    {
+        input = input.substr(ids, ide - ids);
+    }
+    return input;
+}
 
 string& CommandParser::operator[](int index);
 
