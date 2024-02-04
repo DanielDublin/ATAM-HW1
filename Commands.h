@@ -40,7 +40,7 @@ class CommandParser
 
         bool getIsBackground();
         bool getIsComplex();
-        int getArgCount();
+        int getWordCount();
         int getTimeout();
         redirectionType getRedirection();
 
@@ -61,7 +61,7 @@ class CommandParser
         redirectionType redirection;
         bool is_background;
         bool is_complex;
-        int arg_count;
+        int word_count;
         int timeout;
 
         static std::string cleanBackgroundCommand(std::string input);
