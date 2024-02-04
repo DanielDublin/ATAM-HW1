@@ -179,21 +179,37 @@ int CommandParser::getTimeout()
     return this->timeout;
 }
 
-CommandParser::redirectionType CommandParser::getRedirection();
-
-static string CommandParser::cleanBackgroundCommand(string input)
+CommandParser::redirectionType CommandParser::getRedirection()
 {
-    bool isBackground = input[input.find_last_not_of(WHITESPACE)] == '&';
-    int ide = input.find_last_not_of(WHITESPACE);
-    int ids = input.find_first_not_of(WHITESPACE);
-    if (ide != (int)std::string::npos && isBackground)
+    return this->redirection;
+}
+
+string CommandParser::cleanBackgroundCommand(string input)
+{
+    int index = input.find_last_not_of(WHITESPACE);
+    bool is_background = (input[index] == '&');
+    int start_index = input.find_first_not_of(WHITESPACE);
+    int end_index = input.find_last_not_of(WHITESPACE);
+   
+    if (end_index != (int)std::string::npos && is_background)
     {
-        input = input.substr(ids, ide - ids);
+        input = input.substr(start_index, end_index - start_index);
     }
     return input;
 }
 
-string& CommandParser::operator[](int index);
+string& CommandParser::operator[](int index)
+{
+    if (index >= 0 && index < this->arg_count)
+    {
+        if (timeout > 0)
+        {
+            index += this->TIMEOUT_ARG_COUNT;
+        }
+        return this->stripped_words[index];
+    }
+    throw std::logic_error("invalid index");
+}
 
 
 
