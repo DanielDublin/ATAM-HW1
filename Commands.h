@@ -3,8 +3,71 @@
 
 #include <vector>
 
-#define COMMAND_ARGS_MAX_LENGTH (200)
+#define COMMAND_ARGS_MAX_LENGTH (80)
 #define COMMAND_MAX_ARGS (20)
+
+
+
+/*---------------------CommandParser--------------------------*/
+
+const std::string WHITESPACE = " \n\r\t\f\v";
+const std::string COMPLEX_CHAR = "?*";
+
+class CommandParser
+{
+    public:
+
+        enum redirectionType
+        {
+            NONE,
+            APPEND, // >>
+            OVERRIDE, // >
+            PIPE,  // |
+            ERROR_PIPE, // |&
+            REDIRECTION_FAIL = -1
+        };
+
+        CommandParser() = delete;
+        CommandParser(std::string input);
+        ~CommandParser() = default;
+
+        std::string getRawCommanad();
+        std::string getFirstCommand();
+        std::string getSecondCommand();
+        std::string getCleanCommand();
+
+        bool getIsBackground();
+        bool getIsComplex();
+        int getArgCount();
+        int getTimeout();
+        redirectionType getRedirection();
+
+        static std::string cleanBackgroundCommand(std::string input);
+
+        std::string& operator[](int index);
+
+    private:      
+
+        const static int TIMEOUT_ARG_COUNT = 2;
+        static const int MAX_WORD_COUNT = 21;  // Command + 20 args
+
+        std::string raw_command;
+        std::string first_command;
+        std::string second_command;
+        std::string stripped_flagless_command;
+        std::string command_args[MAX_WORD_COUNT];
+        
+        redirectionType redirection;
+        bool is_background;
+        bool is_complex;
+        int arg_count;
+        int timeout;
+};
+
+
+/*---------------------Command--------------------------*/
+
+
 
 class Command {
 // TODO: Add your data members
