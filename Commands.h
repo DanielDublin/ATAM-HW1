@@ -5,6 +5,8 @@
 #include <iostream>
 
 #define COMMAND_ARGS_MAX_LENGTH (80)
+
+#define COMMAND_ARGS_MAX_LENGTH (80)
 #define COMMAND_MAX_ARGS (20)
 
 using namespace std;
@@ -62,6 +64,71 @@ class CommandParser
         bool is_background;
         bool is_complex;
         int arg_count;
+        int timeout;
+
+        static std::string cleanBackgroundCommand(std::string input);
+};
+
+
+/*---------------------Command--------------------------*/
+
+
+
+using namespace std;
+const std::string WHITESPACE = " \n\r\t\f\v";
+const std::string COMPLEX_CHAR = "?*";
+
+
+/*---------------------CommandParser--------------------------*/
+
+
+class CommandParser
+{
+    public:
+
+        enum redirectionType
+        {
+            NONE,
+            APPEND, // >>
+            OVERRIDE, // >
+            PIPE,  // |
+            ERROR_PIPE, // |&
+            REDIRECTION_FAIL = -1
+        };
+
+        CommandParser() = delete;
+        CommandParser(std::string input);
+        ~CommandParser() = default;
+
+        std::string getRawCommanad();
+        std::string getFirstCommand();
+        std::string getSecondCommand();
+        std::string getCleanCommand();
+
+        bool getIsBackground();
+        bool getIsComplex();
+        int getWordCount();
+        int getTimeout();
+        redirectionType getRedirection();
+
+
+        std::string& operator[](int index);
+
+    private:      
+
+        const static int TIMEOUT_ARG_COUNT = 2;
+        static const int MAX_WORD_COUNT = 21;  // Command + 20 args
+
+        std::string raw_command;
+        std::string first_command;
+        std::string second_command;
+        std::string stripped_flagless_command;
+        std::string stripped_words[MAX_WORD_COUNT];
+        
+        redirectionType redirection;
+        bool is_background;
+        bool is_complex;
+        int word_count;
         int timeout;
 
         static std::string cleanBackgroundCommand(std::string input);

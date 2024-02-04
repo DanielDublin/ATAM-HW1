@@ -1,9 +1,9 @@
-#include <unistd.h>
+ 
 #include <string.h>
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <sys/wait.h>
+ 
 #include <iomanip>
 #include "Commands.h"
 
@@ -15,7 +15,7 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
 {
     int first_whitespace_index = input.find_first_not_of(WHITESPACE);
     int last_whitespace_index = input.find_last_not_of(WHITESPACE);
-    this->is_background = input.back() == '&';
+    this->is_background = input[last_whitespace_index] == '&';
     this->is_complex = (input.find_first_of(COMPLEX_CHAR) != string::npos);
 
     if (this->is_background && last_whitespace_index != string::npos)
@@ -51,20 +51,20 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
         }
     }
 
-    this->arg_count = counter;
+    this->word_count = counter;
 
     // strips the timeout + dur part to act as a normal command
     if (this->stripped_words[0] == "timeout" && counter >= 2)
     {
         timeout = stoi(this->stripped_words[1]);
-        arg_count -= 2;  
+        word_count -= 2;  
         int new_index = this->stripped_flagless_command.find(this->stripped_words[2]);
         this->stripped_flagless_command = this->stripped_flagless_command.substr(new_index);
     }
 
 
     // handling command based cases for stripping and inits
-    int redirection_index = input.find(">>");
+    int redirection_index = input.find(">>"); // Append
     if (redirection_index != string::npos)
     {
         this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
@@ -88,8 +88,8 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
         }
     }
 
-    redirection_index = input.find(">");
-    if (redirection_index != string::npos)
+    redirection_index = input.find(">");  // override
+    if (redirection_index != string::npos && input.find(">>") == string::npos)
     {
         this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
         this->second_command = input.substr(redirection_index + 1);
@@ -112,15 +112,15 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
         }
     }
 
-    redirection_index = input.find("|");
-    if (redirection_index != string::npos)
+    redirection_index = input.find("|"); // pipe
+    if (redirection_index != string::npos && input.find("|&") == string::npos)
     {
         this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
         this->second_command = input.substr(redirection_index + 1);
         this->redirection = this->PIPE;
     }
     
-    redirection_index = input.find("|&");
+    redirection_index = input.find("|&");  //err pipe
     if (redirection_index != string::npos)
     {
         this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
@@ -129,7 +129,7 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
     }
     
 
-    if (this->redirection != this->NONE)
+    if (this->redirection != this->NONE) // cant have a redirection with a background process
     {
         this->is_background = false;
     }
@@ -169,9 +169,9 @@ bool CommandParser::getIsComplex()
     return this->is_complex;
 }
 
-int CommandParser::getArgCount()
+int CommandParser::getWordCount()
 {
-    return this->arg_count;
+    return this->word_count;
 }
 
 int CommandParser::getTimeout()
@@ -200,7 +200,7 @@ string CommandParser::cleanBackgroundCommand(string input)
 
 string& CommandParser::operator[](int index)
 {
-    if (index >= 0 && index < this->arg_count)
+    if (index >= 0 && index < this->word_count)
     {
         if (timeout > 0)
         {
@@ -210,6 +210,7 @@ string& CommandParser::operator[](int index)
     }
     throw std::logic_error("invalid index");
 }
+
 
 
 
@@ -257,6 +258,9 @@ void SmallShell::executeCommand(const char *cmd_line) {
   // cmd->execute();
   // Please note that you must fork smash process for some commands (e.g., external commands....)
 }
+
+
+
 
 */
 
