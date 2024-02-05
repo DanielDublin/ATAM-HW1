@@ -18,15 +18,21 @@ const std::string COMPLEX_CHAR = "?*";
 
 /*---------------------Command--------------------------*/
 class Command {
-protected:
-    Input cmdLine;
-    int pid;
+
 public:
-    Command(Input cmdLine);
+
+    Command(CommandParser parsed_command);
+    int getPid();
+    CommandParser getParsedCommand();
+
     virtual ~Command() = default;
     virtual void execute() = 0;
-    Input getCmdLine();
-    int getPid();
+   
+
+protected:
+    int pid;
+    CommandParser parsed_command;
+    
 };
 
 
