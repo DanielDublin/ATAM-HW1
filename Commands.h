@@ -14,69 +14,22 @@ const std::string WHITESPACE = " \n\r\t\f\v";
 const std::string COMPLEX_CHAR = "?*";
 
 
-/*---------------------CommandParser--------------------------*/
-
-
-class CommandParser
-{
-    public:
-
-        enum redirectionType
-        {
-            NONE,
-            APPEND, // >>
-            OVERRIDE, // >
-            PIPE,  // |
-            ERROR_PIPE, // |&
-            REDIRECTION_FAIL = -1
-        };
-
-        CommandParser() = delete;
-        CommandParser(std::string input);
-        ~CommandParser() = default;
-
-        std::string getRawCommanad();
-        std::string getFirstCommand();
-        std::string getSecondCommand();
-        std::string getCleanCommand();
-
-        bool getIsBackground();
-        bool getIsComplex();
-        int getArgCount();
-        int getTimeout();
-        redirectionType getRedirection();
-
-
-        std::string& operator[](int index);
-
-    private:      
-
-        const static int TIMEOUT_ARG_COUNT = 2;
-        static const int MAX_WORD_COUNT = 21;  // Command + 20 args
-
-        std::string raw_command;
-        std::string first_command;
-        std::string second_command;
-        std::string stripped_flagless_command;
-        std::string stripped_words[MAX_WORD_COUNT];
-        
-        redirectionType redirection;
-        bool is_background;
-        bool is_complex;
-        int arg_count;
-        int timeout;
-
-        static std::string cleanBackgroundCommand(std::string input);
-};
 
 
 /*---------------------Command--------------------------*/
+class Command {
+protected:
+    Input cmdLine;
+    int pid;
+public:
+    Command(Input cmdLine);
+    virtual ~Command() = default;
+    virtual void execute() = 0;
+    Input getCmdLine();
+    int getPid();
+};
 
 
-
-using namespace std;
-const std::string WHITESPACE = " \n\r\t\f\v";
-const std::string COMPLEX_CHAR = "?*";
 
 
 /*---------------------CommandParser--------------------------*/
