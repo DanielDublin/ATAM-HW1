@@ -156,6 +156,88 @@ class QuitCommand : public BuiltInCommand {
 };
 
 
+/*--------------------Built-in commands-----------------------------*/
+
+
+class ChromptCommand : public Command {
+public:
+    ChromptCommand(CommandParser parsed_command);
+    virtual ~ChromptCommand() = default;
+    void execute() override;
+};
+
+
+
+class ShowPidCommand : public Command {
+public:
+    ShowPidCommand(CommandParser parsed_command);
+    virtual ~ShowPidCommand() = default;
+    void execute() override;
+};
+
+
+class PWDCommand : public Command {
+public:
+    PWDCommand(CommandParser parsed_command);
+    virtual ~PWDCommand() = default;
+    void execute() override;
+};
+
+
+class CDCommand : public Command {
+    std::string& lastPwd;
+public:
+    CDCommand(CommandParser parsed_command, std::string& prev_PWD);
+    virtual ~CDCommand() = default;
+    void execute() override;
+};
+
+
+class JobsCommand : public Command {
+    JobsList* jobs;
+public:
+    JobsCommand(CommandParser parsed_command, JobsList* jobs);
+    virtual ~JobsCommand() = default;
+    void execute() override;
+};
+
+
+class FGCommand : public Command {
+    JobsList* jobs;
+public:
+    FGCommand(CommandParser parsed_command, JobsList* jobs);
+    virtual ~FGCommand() = default;
+    void execute() override;
+};
+
+
+class QuitCommand : public Command {
+    JobsList* jobs;
+public:
+    QuitCommand(CommandParser parsed_command, JobsList* jobs);
+    virtual ~QuitCommand() = default;
+    void execute() override;
+};
+
+
+class KillCommand : public Command {
+    JobsList* jobs;
+public:
+    KillCommand(CommandParser parsed_command, JobsList* jobs);
+    virtual ~KillCommand() = default;
+    void execute() override;
+};
+
+
+
+
+
+
+
+
+
+
+
 //--------------------------Job----------------------------------//
 class Job{
   public:

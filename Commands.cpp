@@ -8,6 +8,25 @@
 #include "Commands.h"
 
 
+
+
+/*------------------Command--------------------*/
+
+Command::Command(CommandParser parsed_command) : pid(-1), parsed_command(parsed_command)
+{}
+
+
+int Command::getPid()
+{
+    return pid;
+}
+
+CommandParser Command::getParsedCommand()
+{
+    return this->parsed_command;
+}
+
+
 /*-----------------CommandParser-------------------*/
 
 
