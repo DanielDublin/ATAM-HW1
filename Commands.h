@@ -228,13 +228,14 @@ public:
     void execute() override;
 };
 
-
-
-
-
-
-
-
+/*----------------------------Special commands-------------*/
+class ChmodCommand : public Command {
+    JobsList* jobs;
+public:
+    ChmodCommand(CommandParser parsed_command, JobsList* jobs);
+    virtual ~ChmodCommand() = default;
+    void execute() override;
+};
 
 
 
@@ -300,37 +301,6 @@ class JobsList {
   // TODO: Add extra methods or modify exisitng ones as needed
 };
 */
-
-class JobsCommand : public BuiltInCommand {
- // TODO: Add your data members
- public:
-  JobsCommand(const char* cmd_line, JobsList* jobs);
-  virtual ~JobsCommand() {}
-  void execute() override;
-};
-
-class KillCommand : public BuiltInCommand {
- // TODO: Add your data members
- public:
-  KillCommand(const char* cmd_line, JobsList* jobs);
-  virtual ~KillCommand() {}
-  void execute() override;
-};
-
-class ForegroundCommand : public BuiltInCommand {
- // TODO: Add your data members
- public:
-  ForegroundCommand(const char* cmd_line, JobsList* jobs);
-  virtual ~ForegroundCommand() {}
-  void execute() override;
-};
-
-class ChmodCommand : public BuiltInCommand {
- public:
-  ChmodCommand(const char* cmd_line);
-  virtual ~ChmodCommand() {}
-  void execute() override;
-};
 
 
 //--------------------------SmallShell------------------------//
