@@ -93,69 +93,6 @@ class CommandParser
 };
 
 
-
-
-class BuiltInCommand : public Command {
- public:
-  BuiltInCommand(const char* cmd_line);
-  virtual ~BuiltInCommand() {}
-};
-
-class ExternalCommand : public Command {
- public:
-  ExternalCommand(const char* cmd_line);
-  virtual ~ExternalCommand() {}
-  void execute() override;
-};
-
-class PipeCommand : public Command {
-  // TODO: Add your data members
- public:
-  PipeCommand(const char* cmd_line);
-  virtual ~PipeCommand() {}
-  void execute() override;
-};
-
-class RedirectionCommand : public Command {
- // TODO: Add your data members
- public:
-  explicit RedirectionCommand(const char* cmd_line);
-  virtual ~RedirectionCommand() {}
-  void execute() override;
-  //void prepare() override;
-  //void cleanup() override;
-};
-
-class ChangeDirCommand : public BuiltInCommand {
-// TODO: Add your data members public:
-  ChangeDirCommand(const char* cmd_line, char** plastPwd);
-  virtual ~ChangeDirCommand() {}
-  void execute() override;
-};
-
-class GetCurrDirCommand : public BuiltInCommand {
- public:
-  GetCurrDirCommand(const char* cmd_line);
-  virtual ~GetCurrDirCommand() {}
-  void execute() override;
-};
-
-class ShowPidCommand : public BuiltInCommand {
- public:
-  ShowPidCommand(const char* cmd_line);
-  virtual ~ShowPidCommand() {}
-  void execute() override;
-};
-
-class JobsList;
-class QuitCommand : public BuiltInCommand {
-// TODO: Add your data members public:
-  QuitCommand(const char* cmd_line, JobsList* jobs);
-  virtual ~QuitCommand() {}
-  void execute() override;
-};
-
-
 /*--------------------Built-in commands-----------------------------*/
 
 
@@ -228,12 +165,52 @@ public:
     void execute() override;
 };
 
-/*----------------------------Special commands-------------*/
+
+
+
+/*---------------------------External commands--------------------------------*/
+
+class ExternalCommand : public Command {
+    JobsList* jobs;
+    TimeoutList* timeouts;
+public:
+    ExternalCommand(CommandParser parsed_command, JobsList* jobs, TimeoutList* timeouts);
+    virtual ~ExternalCommand() = default;
+    void execute() override;
+};
+
+
+/*-------------------------Special commands-------------------*/
+
+class RedirectionCommand : public Command {
+    std::string filePath;
+public:
+    explicit RedirectionCommand(CommandParser parsed_command);
+    virtual ~RedirectionCommand() = default;
+    void execute() override;
+};
+
+class PipeLineCommand : public Command {
+public:
+    PipeLineCommand(CommandParser parsed_command);
+    virtual ~PipeCommand() = default;
+    void execute() override;
+};
+
+
 class ChmodCommand : public Command {
     JobsList* jobs;
 public:
     ChmodCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~ChmodCommand() = default;
+    void execute() override;
+};
+
+class TimeoutCommand : public Command {
+    JobsList* jobs;
+public:
+    TimeoutCommand(CommandParser parsed_command, JobsList* jobs);
+    virtual ~TimeoutCommand() = default;
     void execute() override;
 };
 
