@@ -4,7 +4,6 @@
 #include <vector>
 #include <iostream>
 
-#define COMMAND_ARGS_MAX_LENGTH (80)
 
 #define COMMAND_ARGS_MAX_LENGTH (80)
 #define COMMAND_MAX_ARGS (20)
