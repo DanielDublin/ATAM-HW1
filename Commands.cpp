@@ -383,9 +383,13 @@ Command* SmallShell::CreateCommand(string command_line)
 }
 void SmallShell::executeCommand(string command_line)
 {
-  //should be:
-  //CreateCommand(command_line)->execute();
-  //but doing this for testing:
-  cout << "try" << endl;
+    
+    this->jobs_list->deleteFinishedJobs();
+
+    Command* command = CreateCommand(command_line);
+    if (command != nullptr)
+    {
+        command->execute();
+    }
   
 }
