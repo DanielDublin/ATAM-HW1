@@ -246,34 +246,34 @@ SmallShell::~SmallShell() {
 
 
 
-Creates and returns a pointer to Command class which matches the given command line (cmd_line)
+Creates and returns a pointer to Command class which matches the given command line (command_line)
 
-Command * SmallShell::CreateCommand(const char* cmd_line) {
+Command * SmallShell::CreateCommand(const char* command_line) {
 	// For example:
 
-  string cmd_s = _trim(string(cmd_line));
+  string cmd_s = _trim(string(command_line));
   string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
 
   if (firstWord.compare("pwd") == 0) {
-    return new GetCurrDirCommand(cmd_line);
+    return new GetCurrDirCommand(command_line);
   }
   else if (firstWord.compare("showpid") == 0) {
-    return new ShowPidCommand(cmd_line);
+    return new ShowPidCommand(command_line);
   }
   else if ...
   .....
   else {
-    return new ExternalCommand(cmd_line);
+    return new ExternalCommand(command_line);
   }
   
   return nullptr;
 }
 
 
-void SmallShell::executeCommand(const char *cmd_line) {
+void SmallShell::executeCommand(const char *command_line) {
   // TODO: Add your implementation here
   // for example:
-  // Command* cmd = CreateCommand(cmd_line);
+  // Command* cmd = CreateCommand(command_line);
   // cmd->execute();
   // Please note that you must fork smash process for some commands (e.g., external commands....)
 }
@@ -282,6 +282,20 @@ void SmallShell::executeCommand(const char *cmd_line) {
 
 
 */
+
+
+/*----------------Built-in commands--------------------*/
+
+
+ShowPidCommand::ShowPidCommand(CommandParser parsed_command) : Command(parsed_command) {}
+
+void ShowPidCommand::execute()
+{
+    std::cout << "smash pid is " << this->getPid() << std::endl;
+}
+
+
+
 
 
 
@@ -334,7 +348,13 @@ void JobsList::printJobsList()
   }
 
 //--------------------------SmallShell------------------------//
-SmallShell::SmallShell() {}
+SmallShell::SmallShell() : prompt("smash"), last_dir("") {
+    this->smash_pid = getpid();
+    this->jobs_list = new JobsList();
+    //this->time_out_jobs_list = new TimeoutList();
+}
+
+
 SmallShell::~SmallShell() {
   delete jobs_list;
   delete time_out_jobs_list;
@@ -345,14 +365,26 @@ int SmallShell::get_command_size_max() {return COMMAND_SIZE_MAX;}
 int SmallShell::get_process_name_max() {return PROCESS_NAME_MAX;}
 
 
-Command* SmallShell::CreateCommand(string cmd_line)
+Command* SmallShell::CreateCommand(string command_line)
 {
-  return NULL;
+    CommandParser processed_command(command_line);
+
+    if (processed_command.getWordCount() == 0)
+    {
+        return nullptr;
+    }
+
+    std::string command_name = processed_command[0];
+
+
+    if (command_name.compare("showpid") == 0) {
+        return new ShowPidCommand(processed_command);
+    }
 }
-void SmallShell::executeCommand(string cmd_line)
+void SmallShell::executeCommand(string command_line)
 {
   //should be:
-  //CreateCommand(cmd_line)->execute();
+  //CreateCommand(command_line)->execute();
   //but doing this for testing:
   cout << "try" << endl;
   

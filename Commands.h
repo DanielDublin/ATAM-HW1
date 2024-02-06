@@ -303,7 +303,7 @@ class SmallShell {
   //////////////////////
 
   private:
-  int pid;
+  int smash_pid;
   string prompt = "smash";
   string last_dir = "";
   JobsList *jobs_list;
