@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
- 
+#include <unistd.h>
 #include <iomanip>
 #include "Commands.h"
 
