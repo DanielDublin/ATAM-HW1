@@ -254,7 +254,7 @@ void CDCommand::execute()
         std::cerr << "smash error: cd: too many arguments\n";
         return;
     }
-    std::string currDir = SmallShell::get_cur_dir();
+    std::string currDir = SmallShell::get_curr_dir();
     if (parsed_command[1].compare("-") == 0)
     {
         if (lastPwd.compare("") == 0)
