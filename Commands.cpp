@@ -18,7 +18,7 @@ Command::Command(CommandParser parsed_command) : pid(-1), parsed_command(parsed_
 
 int Command::getPid()
 {
-    return pid;
+    return this->pid;
 }
 
 CommandParser Command::getParsedCommand()
