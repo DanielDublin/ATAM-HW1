@@ -14,29 +14,6 @@ const std::string COMPLEX_CHAR = "?*";
 
 
 
-
-/*---------------------Command--------------------------*/
-class Command {
-
-public:
-
-    Command(CommandParser parsed_command);
-    int getPid();
-    CommandParser getParsedCommand();
-
-    virtual ~Command() = default;
-    virtual void execute() = 0;
-   
-
-protected:
-    int pid;
-    CommandParser parsed_command;
-    
-};
-
-
-
-
 /*---------------------CommandParser--------------------------*/
 
 
@@ -90,6 +67,69 @@ class CommandParser
         int timeout;
 
         static std::string cleanBackgroundCommand(std::string input);
+};
+
+
+/*---------------------Command--------------------------*/
+class Command {
+
+public:
+
+    Command(CommandParser parsed_command);
+    int getPid();
+    CommandParser getParsedCommand();
+
+    virtual ~Command() = default;
+    virtual void execute() = 0;
+   
+
+protected:
+    int pid;
+    CommandParser parsed_command;
+    
+};
+
+
+
+//--------------------------Job----------------------------------//
+class Job{
+  public:
+  enum status {
+      RUNNING_FG,
+      RUNNING_BG,
+      FINISHED
+  };
+
+  private:
+  int jobID = -1;
+  Command* command;
+  status currentStatus = status::FINISHED;
+
+  public:
+  Job() = default;
+  ~Job() = default;
+  void setJobID(int id);
+  int getJobID();
+  Job::status getCurrentStatus();
+  void setCurrentStatus(Job::status status);
+  void setCommand(Command *c);
+  Command* getCommand();
+};
+
+
+//--------------------------JobsList----------------------------//
+class JobsList{
+  private:
+  vector<Job*> list;
+  int maxJobID = 0;
+
+  public:
+  JobsList() = default;
+  ~JobsList();
+  void deleteFinishedJobs();
+  void addJobToList(Job* j);
+  Job *getJobById(int jobId);
+  void printJobsList();
 };
 
 
@@ -172,9 +212,10 @@ public:
 
 class ExternalCommand : public Command {
     JobsList* jobs;
-    TimeoutList* timeouts;
+    //TimeoutList* timeouts;
 public:
-    ExternalCommand(CommandParser parsed_command, JobsList* jobs, TimeoutList* timeouts);
+    //ExternalCommand(CommandParser parsed_command, JobsList* jobs, TimeoutList* timeouts);
+    ExternalCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~ExternalCommand() = default;
     void execute() override;
 };
@@ -193,7 +234,7 @@ public:
 class PipeLineCommand : public Command {
 public:
     PipeLineCommand(CommandParser parsed_command);
-    virtual ~PipeCommand() = default;
+    virtual ~PipeLineCommand() = default;
     void execute() override;
 };
 
@@ -216,46 +257,6 @@ public:
 
 
 
-//--------------------------Job----------------------------------//
-class Job{
-  public:
-  enum status {
-      RUNNING_FG,
-      RUNNING_BG,
-      FINISHED
-  };
-
-  private:
-  int jobID = -1;
-  Command* command;
-  status currentStatus = status::FINISHED;
-
-  public:
-  Job() = default;
-  ~Job() = default;
-  void setJobID(int id);
-  int getJobID();
-  Job::status getCurrentStatus();
-  void setCurrentStatus(Job::status status);
-  void setCommand(Command *c);
-  Command* getCommand();
-};
-
-
-//--------------------------JobsList----------------------------//
-class JobsList{
-  private:
-  vector<Job*> list;
-  int maxJobID = 0;
-
-  public:
-  JobsList() = default;
-  ~JobsList();
-  void deleteFinishedJobs();
-  void addJobToList(Job* j);
-  Job *getJobById(int jobId);
-  void printJobsList();
-};
 
 /*
 class JobsList {
@@ -284,6 +285,7 @@ class JobsList {
 class SmallShell {
   private:
   SmallShell();
+
   public:
   Command *CreateCommand(string cmd_line);
   SmallShell(SmallShell const&)      = delete; // disable copy ctor
@@ -318,6 +320,7 @@ class SmallShell {
   int get_args_max();
   int get_command_size_max();
   int get_process_name_max();
+  int get_Smash_Pid();
 
 };
 
