@@ -235,14 +235,50 @@ string& CommandParser::operator[](int index)
 
 
 ShowPidCommand::ShowPidCommand(CommandParser parsed_command) : Command(parsed_command) {}
-
 void ShowPidCommand::execute()
 {
-    std::cout << "smash pid is " << SmallShell::getInstance().get_Smash_Pid() << std::endl;
+    std::cout << "smash pid is " << SmallShell::getInstance().get_smash_pid() << endl;
 }
 
 
-
+CDCommand::CDCommand(CommandParser parsed_command, string& last_dir) : Command(parsed_command), last_dir(last_dir) {}
+void CDCommand::execute()
+{
+    if (parsed_command.getWordCount() < 2)
+    {
+        std::cerr << "smash error:> \"" << parsed_command.getRawCommanad() << "\"" << endl;
+        return;
+    }
+    if (parsed_command.getWordCount() > 2)
+    {
+        std::cerr << "smash error: cd: too many arguments\n";
+        return;
+    }
+    std::string currDir = SmallShell::get_cur_dir();
+    if (parsed_command[1].compare("-") == 0)
+    {
+        if (lastPwd.compare("") == 0)
+        {
+            std::cerr << "smash error: cd: OLDPWD not set" << endl;
+            return;
+        }
+        if (chdir(lastPwd.c_str()) == -1)
+        {
+            perror("smash error: chdir failed");
+            return;
+        }
+        lastPwd = currDir;
+    }
+    else if (chdir(parsed_command[1].c_str()) == -1)
+    {
+        perror("smash error: chdir failed");
+        return;
+    }
+    else
+    {
+        lastPwd = currDir;
+    }
+}
 
 
 
@@ -310,8 +346,32 @@ int SmallShell::get_max_num_of_processes() {return MAX_NUM_OF_PROCESSES;}
 int SmallShell::get_args_max() {return ARGS_MAX;}
 int SmallShell::get_command_size_max() {return COMMAND_SIZE_MAX;}
 int SmallShell::get_process_name_max() {return PROCESS_NAME_MAX;}
-int SmallShell::get_Smash_Pid() {return this->smash_pid;}
+int SmallShell::get_smash_pid() {return this->smash_pid;}
 
+string& SmallShell::get_curr_dir()
+{
+    int size = 16;
+    try
+    {
+        char* pathCharArr = new char[size]();
+        pathCharArr = getcwd(pathCharArr, size);
+        while (pathCharArr == NULL && size <= 200)
+        {
+            size *= 2;
+            delete[](pathCharArr);
+            pathCharArr = new char[size]();
+            pathCharArr = getcwd(pathCharArr, size);
+        }
+        std::string pathStr(pathCharArr);
+        delete[](pathCharArr);
+        return pathStr;
+    }
+    catch (std::bad_alloc& e)
+    {
+        perror("smash error: malloc failed");
+        throw e;
+    }
+}
 
 Command* SmallShell::CreateCommand(string command_line)
 {
@@ -327,6 +387,9 @@ Command* SmallShell::CreateCommand(string command_line)
 
     if (command_name.compare("showpid") == 0) {
         return new ShowPidCommand(processed_command);
+    }
+    else if (command_name.compare("cd") == 0) {
+        return new CDCommand(processed_command, this->last_dir);
     }
     return nullptr;
 }

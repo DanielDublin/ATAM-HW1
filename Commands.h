@@ -162,9 +162,9 @@ public:
 
 
 class CDCommand : public Command {
-    std::string& lastPwd;
+    std::string& last_dir;
 public:
-    CDCommand(CommandParser parsed_command, std::string& prev_PWD);
+    CDCommand(CommandParser parsed_command, std::string& last_dir);
     virtual ~CDCommand() = default;
     void execute() override;
 };
@@ -320,7 +320,8 @@ class SmallShell {
   int get_args_max();
   int get_command_size_max();
   int get_process_name_max();
-  int get_Smash_Pid();
+  int get_smash_pid();
+  string& get_cur_dir();
 
 };
 
