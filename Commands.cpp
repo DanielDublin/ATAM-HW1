@@ -354,28 +354,24 @@ int SmallShell::get_smash_pid() {return this->smash_pid;}
 
 string SmallShell::get_curr_dir()
 {
-    int size = 16;
+    int size = COMMAND_ARGS_MAX_LENGTH;
+
     try
     {
         char* pathCharArr = new char[size]();
         pathCharArr = getcwd(pathCharArr, size);
-
-        while (pathCharArr == NULL && size <= COMMAND_ARGS_MAX_LENGTH)
-        {
-            size *= 2;
-            delete[](pathCharArr);
-            pathCharArr = new char[size]();
-            pathCharArr = getcwd(pathCharArr, size);
-        }
+      
         string pathStr(pathCharArr);
         delete[](pathCharArr);
+
         return pathStr;
     }
     catch (std::bad_alloc& e)  //need to remove
     {
-        perror("smash error: malloc failed");
         throw e;
     }
+
+    return nullptr;
 }
 
 Command* SmallShell::CreateCommand(string command_line)
