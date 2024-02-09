@@ -257,7 +257,7 @@ void CDCommand::execute()
     }
 
 
-    string curr_dir = SmallShell::get_curr_dir(); //check err
+    string curr_dir = SmallShell::get_curr_dir(); //change to a better name later --------------------------------------------------------------------------
 
     if (parsed_command[1].compare("-") == 0)  
     {
