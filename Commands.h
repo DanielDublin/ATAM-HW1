@@ -322,6 +322,7 @@ class SmallShell {
   int get_process_name_max();
   int get_smash_pid();
   string& get_curr_dir();
+  string getPrompt();
   string getPWD();
   int get_job_list_size();
   void printJobsList();
