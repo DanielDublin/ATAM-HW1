@@ -248,65 +248,65 @@ KillCommand::KillCommand(CommandParser parsed_command, JobsList* jobs) : Command
 void KillCommand::execute()
 {
 
-    int sigNum = -1, jobId = -1;
+    int sigal_number = -1, job_id = -1;
 
-    if (parsed_command.getWordCount() != 3)
+    if (parsed_command.getWordCount() != 3)  // NEED TO CHECK IF THE ORDER OF ERRORS IS CORRECT - THE PDF IS BS -----------------------------------------------
     {
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
         return;
     }
 
-    std::string sigNumArg = parsed_command[1];
-    std::string jobIdArg = parsed_command[2];
+    std::string signal_arg = parsed_command[1];
+    std::string job_id_arg = parsed_command[2];
 
     
 
     try
     {
-        sigNum = std::stoi(sigNumArg.substr(1, sigNumArg.length() - 1));
-        jobId = std::stoi(jobIdArg);
+        sigal_number = std::stoi(signal_arg.substr(1, signal_arg.length() - 1));
+        job_id = std::stoi(job_id_arg);
     }
     catch (std::invalid_argument const& ex)
     {
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
         return;
     }
-    if (sigNumArg[0] != '-')
+    if (signal_arg[0] != '-')
     {
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
         return;
     }
-    JobsList::JobEntry* job = jobs->getJobById(jobId);
+    JobsList::JobEntry* job = jobs->getJobById(job_id);
     if (job == nullptr)
     {
-        std::cerr << "smash error: kill: job-id " << jobId << " does not exist" << std::endl;
+        std::cerr << "smash error: kill: job-id " << job_id << " does not exist" << std::endl;
         return;
     }
     if (kill(job->processId, 0) != 0)
     {
         return;
     }
-    if (kill(job->processId, sigNum) == -1)
+    if (kill(job->processId, sigal_number) == -1)
     {
         perror("smash error: kill failed");
     }
     else
     {
-        std::cout << "signal number " << sigNum << " was sent to pid " << job->processId << std::endl;
-        if (sigNum == SIGSTOP || sigNum == SIGTSTP)
+        std::cout << "signal number " << sigal_number << " was sent to pid " << job->processId << std::endl;
+        if (sigal_number == SIGSTOP || sigal_number == SIGTSTP)
         {
             job->isStopped = true;
         }
-        else if (sigNum == SIGCONT)
+        else if (sigal_number == SIGCONT)
         {
             job->isStopped = false;
         }
-        if (sigNum == SIGKILL)
+        if (sigal_number == SIGKILL)
         {
             int temp = waitpid(job->processId, NULL, 0);
             if (temp == job->processId)
             {
-                jobs->removeJobById(job->jobId);
+                jobs->removeJobById(job->job_id);
             }
             else if (temp == -1)
             {
@@ -349,12 +349,12 @@ void JobsList::addJobToList(Job* j)
     list.push_back(j);
 
   }
-Job* JobsList::getJobById(int jobId)
+Job* JobsList::getJobById(int job_id)
   {
     JobsList::deleteFinishedJobs();
     Job *j = NULL;
     for(unsigned int i = 0; i < list.size(); i++)
-      if (list[i]->getJobID() == jobId)
+      if (list[i]->getJobID() == job_id)
         j = list[i];
     return j;
   }
