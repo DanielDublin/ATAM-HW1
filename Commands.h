@@ -137,6 +137,7 @@ class JobsList{
   ~JobsList();
   void deleteFinishedJobs();
   void addJobToList(Job* j);
+  void removeJob(int job_id);
   Job *getJobById(int jobId);
   void printJobsList();
 };

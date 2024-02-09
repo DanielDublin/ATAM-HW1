@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <unistd.h>
+#include <signal.h>
 #include <iomanip>
 #include "Commands.h"
 
@@ -294,25 +295,27 @@ void KillCommand::execute()
     {
         perror("smash error: kill failed");
     }
-    else
+    else 
     {
+        
         std::cout << "signal number " << sigal_number << " was sent to pid " << job->getPid() << std::endl;
+
         if (sigal_number == SIGSTOP || sigal_number == SIGTSTP)
         {
-            job->isStopped = true;
+            job->setIsStopped(true);
         }
         else if (sigal_number == SIGCONT)
         {
-            job->isStopped = false;
+            job->setIsStopped(false);
         }
-        if (sigal_number == SIGKILL)
+        else if (sigal_number == SIGKILL)
         {
-            int temp = waitpid(job->processId, NULL, 0);
-            if (temp == job->processId)
+            int child_pid = waitpid(job->getPid(), NULL, 0);
+            if (child_pid == job->getPid())
             {
-                jobs->removeJobById(job->job_id);
+                jobs->removeJobById(job->getJobID());
             }
-            else if (temp == -1)
+            else if (child_pid == -1)
             {
                 perror("smash error: wait failed");
             }
@@ -357,6 +360,24 @@ void JobsList::addJobToList(Job* j)
     list.push_back(j);
 
   }
+
+
+void JobsList::removeJob(int job_id)
+{
+    for (int i = 0; i < (int)this->list.size(); i++)
+    {
+        if (list[i]->getJobID() == job_id)
+        {
+            Job* target_job = list[i];
+            list.erase(list.begin() + i);
+
+            delete(target_job);
+            break;
+        }
+    }
+}
+
+
 Job* JobsList::getJobById(int job_id)
   {
     JobsList::deleteFinishedJobs();
