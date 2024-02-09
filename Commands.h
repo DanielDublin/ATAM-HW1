@@ -321,7 +321,7 @@ class SmallShell {
   int get_command_size_max();
   int get_process_name_max();
   int get_smash_pid();
-  string& get_curr_dir();
+  string get_curr_dir();
 
 };
 
