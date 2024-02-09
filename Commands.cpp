@@ -279,23 +279,24 @@ void KillCommand::execute()
 
     Job* job = jobs->getJobById(job_id);
 
-    if (job == nullptr)
+    if (job == nullptr) // existance check
     {
         std::cerr << "smash error: kill: job-id " << job_id << " does not exist" << std::endl;
         return;
     }
 
-    if (kill(job->pid, 0) != 0)
+    if (kill(job->getPid(), 0) != 0) // check for errors as preperation
     {
         return;
     }
-    else if (kill(job->processId, sigal_number) == -1)
+
+    if (kill(job->getPid(), sigal_number) == -1) // send sig
     {
         perror("smash error: kill failed");
     }
     else
     {
-        std::cout << "signal number " << sigal_number << " was sent to pid " << job->processId << std::endl;
+        std::cout << "signal number " << sigal_number << " was sent to pid " << job->getPid() << std::endl;
         if (sigal_number == SIGSTOP || sigal_number == SIGTSTP)
         {
             job->isStopped = true;
@@ -330,7 +331,8 @@ void Job::setCommand(Command *c) {command = c;}
 Command* Job::getCommand() {return command;}
 void Job::setPid(int id) { this->pid = pid; }
 int Job::getPid() { return this->pid; }
-
+void Job::setIsStopped(bool is_stopped) { this->is_stopped = is_stopped; }
+bool Job::getIsStopped() { return this->is_stopped; }
 
 //--------------------------JobsList----------------------------//
 JobsList::~JobsList()

@@ -100,12 +100,6 @@ class Job{
       FINISHED
   };
 
-  private:
-  int jobID;
-  int pid;
-  Command* command;
-  status currentStatus;
-
   public:
    Job(int pid);
   ~Job() = default;
@@ -117,6 +111,18 @@ class Job{
   void setCurrentStatus(Job::status status);
   void setCommand(Command *c);
   Command* getCommand();
+  void setIsStopped(bool is_stopped);
+  bool getIsStopped();
+
+
+private:
+    int jobID;
+    int pid;
+    bool is_stopped;
+    Command* command;
+    status currentStatus;
+
+
 };
 
 
