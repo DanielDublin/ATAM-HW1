@@ -322,7 +322,7 @@ void KillCommand::execute()
 
 
 //--------------------------Job----------------------------------//
-Job::Job(int pid) : pid(pid), jobID(-1), currentStatus(status::FINISHED) {}
+Job::Job(int pid) : pid(pid), jobID(-1), currentStatus(status::FINISHED), is_stopped(false) {}
 void Job::setJobID(int id) {jobID = id;}
 int Job::getJobID() {return jobID;}
 Job::status Job::getCurrentStatus() {return currentStatus;}
