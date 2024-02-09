@@ -239,7 +239,7 @@ ShowPidCommand::ShowPidCommand(CommandParser parsed_command) : Command(parsed_co
 
 void ShowPidCommand::execute()
 {
-    std::cout << "smash pid is " << SmallShell::getInstance().get_Smash_Pid() << std::endl;
+    cout << "smash pid is " << SmallShell::getInstance().get_Smash_Pid() << endl;
 }
 
 
@@ -253,7 +253,7 @@ void KillCommand::execute()
 
     if (parsed_command.getWordCount() != 3)  // NEED TO CHECK IF THE ORDER OF ERRORS IS CORRECT - THE PDF IS BS -----------------------------------------------
     {
-        std::cerr << "smash error: kill: invalid arguments" << std::endl;
+        std::cerr << "smash error: kill: invalid arguments" << endl;
         return;
     }
 
@@ -262,7 +262,7 @@ void KillCommand::execute()
 
     if (signal_arg[0] != '-')
     {
-        std::cerr << "smash error: kill: invalid arguments" << std::endl;
+        std::cerr << "smash error: kill: invalid arguments" << endl;
         return;
     }
 
@@ -273,7 +273,7 @@ void KillCommand::execute()
     }
     catch (std::invalid_argument const& ex)
     {
-        std::cerr << "smash error: kill: invalid arguments" << std::endl;
+        std::cerr << "smash error: kill: invalid arguments" << endl;
         return;
     }
 
@@ -282,7 +282,7 @@ void KillCommand::execute()
 
     if (job == nullptr) // existance check
     {
-        std::cerr << "smash error: kill: job-id " << job_id << " does not exist" << std::endl;
+        std::cerr << "smash error: kill: job-id " << job_id << " does not exist" << endl;
         return;
     }
 
@@ -298,7 +298,7 @@ void KillCommand::execute()
     else 
     {
         
-        std::cout << "signal number " << sigal_number << " was sent to pid " << job->getPid() << std::endl;
+        cout << "signal number " << sigal_number << " was sent to pid " << job->getPid() << endl;
 
         if (sigal_number == SIGSTOP || sigal_number == SIGTSTP)
         {
@@ -311,9 +311,10 @@ void KillCommand::execute()
         else if (sigal_number == SIGKILL)
         {
             int child_pid = waitpid(job->getPid(), NULL, 0);
+
             if (child_pid == job->getPid())
             {
-                jobs->removeJobById(job->getJobID());
+                jobs->removeJob(job->getJobID());
             }
             else if (child_pid == -1)
             {
