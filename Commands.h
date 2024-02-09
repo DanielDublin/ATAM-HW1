@@ -14,6 +14,7 @@ const std::string COMPLEX_CHAR = "?*";
 
 
 
+
 /*---------------------CommandParser--------------------------*/
 
 
@@ -91,6 +92,7 @@ protected:
 
 
 
+
 //--------------------------Job----------------------------------//
 class Job{
   public:
@@ -130,7 +132,31 @@ class JobsList{
   void addJobToList(Job* j);
   Job *getJobById(int jobId);
   void printJobsList();
+  int getListSize();
+  void killAllJobs();
 };
+
+/*
+class JobsList {
+ public:
+  class JobEntry {
+   // TODO: Add your data members
+  };
+ // TODO: Add your data members
+ public:
+  JobsList();
+  ~JobsList();
+  void addJob(Command* cmd, bool isStopped = false);
+  void printJobsList();
+  void killAllJobs();
+  void removeFinishedJobs();
+  JobEntry * getJobById(int jobId);
+  void removeJobById(int jobId);
+  JobEntry * getLastJob(int* lastJobId);
+  JobEntry *getLastStoppedJob(int *jobId);
+  // TODO: Add extra methods or modify exisitng ones as needed
+};
+*/
 
 
 /*--------------------Built-in commands-----------------------------*/
@@ -162,9 +188,9 @@ public:
 
 
 class CDCommand : public Command {
-    std::string& lastPwd;
+    std::string& last_dir;
 public:
-    CDCommand(CommandParser parsed_command, std::string& prev_PWD);
+    CDCommand(CommandParser parsed_command, std::string& last_dir);
     virtual ~CDCommand() = default;
     void execute() override;
 };
@@ -212,10 +238,9 @@ public:
 
 class ExternalCommand : public Command {
     JobsList* jobs;
-    //TimeoutList* timeouts;
+    JobsList* timeouts;
 public:
-    //ExternalCommand(CommandParser parsed_command, JobsList* jobs, TimeoutList* timeouts);
-    ExternalCommand(CommandParser parsed_command, JobsList* jobs);
+    ExternalCommand(CommandParser parsed_command, JobsList* jobs, JobsList* timeouts);
     virtual ~ExternalCommand() = default;
     void execute() override;
 };
@@ -257,35 +282,10 @@ public:
 
 
 
-
-/*
-class JobsList {
- public:
-  class JobEntry {
-   // TODO: Add your data members
-  };
- // TODO: Add your data members
- public:
-  JobsList();
-  ~JobsList();
-  void addJob(Command* cmd, bool isStopped = false);
-  void printJobsList();
-  void killAllJobs();
-  void removeFinishedJobs();
-  JobEntry * getJobById(int jobId);
-  void removeJobById(int jobId);
-  JobEntry * getLastJob(int* lastJobId);
-  JobEntry *getLastStoppedJob(int *jobId);
-  // TODO: Add extra methods or modify exisitng ones as needed
-};
-*/
-
-
 //--------------------------SmallShell------------------------//
 class SmallShell {
   private:
   SmallShell();
-
   public:
   Command *CreateCommand(string cmd_line);
   SmallShell(SmallShell const&)      = delete; // disable copy ctor
@@ -320,7 +320,13 @@ class SmallShell {
   int get_args_max();
   int get_command_size_max();
   int get_process_name_max();
-  int get_Smash_Pid();
+  int get_smash_pid();
+  string& get_curr_dir();
+  string getPrompt();
+  string getPWD();
+  int get_job_list_size();
+  void printJobsList();
+  void killAllJobs();
 
 };
 

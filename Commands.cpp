@@ -4,6 +4,9 @@
 #include <vector>
 #include <sstream>
 #include <unistd.h>
+#include<signal.h>
+
+ 
 #include <iomanip>
 #include "Commands.h"
 
@@ -18,7 +21,7 @@ Command::Command(CommandParser parsed_command) : pid(-1), parsed_command(parsed_
 
 int Command::getPid()
 {
-    return this->pid;
+    return pid;
 }
 
 CommandParser Command::getParsedCommand()
@@ -231,17 +234,79 @@ string& CommandParser::operator[](int index)
 }
 
 
+
 /*----------------Built-in commands--------------------*/
 
 
 ShowPidCommand::ShowPidCommand(CommandParser parsed_command) : Command(parsed_command) {}
+CDCommand::CDCommand(CommandParser parsed_command, string& last_dir) : Command(parsed_command), last_dir(last_dir) {}
+PWDCommand::PWDCommand(CommandParser parsed_command) : Command(parsed_command) {}
+JobsCommand::JobsCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command) {}
+QuitCommand::QuitCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command) {}
 
 void ShowPidCommand::execute()
 {
-    std::cout << "smash pid is " << SmallShell::getInstance().get_Smash_Pid() << std::endl;
+    std::cout << "smash pid is " << this->getPid() << std::endl;
 }
 
+void PWDCommand::execute() 
+{
+    std::cout << SmallShell::getInstance().getPWD() << std::endl;
+}
 
+void JobsCommand::execute() 
+{
+    SmallShell::getInstance().printJobsList();
+}
+
+void QuitCommand::execute() 
+{
+  if (parsed_command.getWordCount() > 1 && parsed_command[1].compare("kill") == 0)
+  {
+    cout << "smash: sending SIGKILL signal to " << SmallShell::getInstance().get_job_list_size() << " jobs:" << endl;
+    SmallShell::getInstance().killAllJobs();
+  }
+
+  exit(0);
+}
+
+void CDCommand::execute()
+{
+    if (parsed_command.getWordCount() < 2)
+    {
+        std::cerr << "smash error:> \"" << parsed_command.getRawCommanad() << "\"" << endl;
+        return;
+    }
+    if (parsed_command.getWordCount() > 2)
+    {
+        std::cerr << "smash error: cd: too many arguments\n";
+        return;
+    }
+    std::string currDir = SmallShell::getInstance().get_curr_dir();
+    if (parsed_command[1].compare("-") == 0)
+    {
+        if (last_dir.compare("") == 0)
+        {
+            std::cerr << "smash error: cd: OLDPWD not set" << endl;
+            return;
+        }
+        if (chdir(last_dir.c_str()) == -1)
+        {
+            perror("smash error: chdir failed");
+            return;
+        }
+        last_dir = currDir;
+    }
+    else if (chdir(parsed_command[1].c_str()) == -1)
+    {
+        perror("smash error: chdir failed");
+        return;
+    }
+    else
+    {
+        last_dir = currDir;
+    }
+}
 
 
 
@@ -258,7 +323,8 @@ Command* Job::getCommand() {return command;}
 //--------------------------JobsList----------------------------//
 JobsList::~JobsList()
 {
-  delete &list;
+  //no need for deletion here, it causes double free
+  ;
 }
 void JobsList::deleteFinishedJobs()
   {
@@ -291,8 +357,25 @@ void JobsList::printJobsList()
   {
     JobsList::deleteFinishedJobs();
     for(unsigned int i = 0; i < list.size(); i++)
-      cout << "[" << i << "]   ID:" << list[i]->getJobID() << "  STATUS:" << list[i]->getCurrentStatus() << endl;
+      cout << "[" << i << "] " << list[i]->getCommand()->getParsedCommand().getRawCommanad() << endl;
   }
+
+  int JobsList::getListSize() {return list.size();}
+
+
+  void JobsList::killAllJobs()
+  {
+    JobsList::deleteFinishedJobs();
+    for(int i = 0; i < list.size(); i++)
+      {
+        std::cout << list[i]->getCommand()->getPid() << ": " << list[i]->getCommand()->getParsedCommand().getRawCommanad() << std::endl;
+        kill(list[i]->getCommand()->getPid(), SIGKILL);
+        list[i]->setCurrentStatus(Job::status::FINISHED);
+      }
+    JobsList::deleteFinishedJobs();
+  }
+  
+
 
 //--------------------------SmallShell------------------------//
 SmallShell::SmallShell() : prompt("smash"), last_dir("") {
@@ -300,17 +383,70 @@ SmallShell::SmallShell() : prompt("smash"), last_dir("") {
     this->jobs_list = new JobsList();
     //this->time_out_jobs_list = new TimeoutList();
 }
-
-
 SmallShell::~SmallShell() {
   delete jobs_list;
-  delete time_out_jobs_list;
+  //delete time_out_jobs_list;
 }
 int SmallShell::get_max_num_of_processes() {return MAX_NUM_OF_PROCESSES;}
 int SmallShell::get_args_max() {return ARGS_MAX;}
 int SmallShell::get_command_size_max() {return COMMAND_SIZE_MAX;}
 int SmallShell::get_process_name_max() {return PROCESS_NAME_MAX;}
-int SmallShell::get_Smash_Pid() {return this->smash_pid;}
+
+string& SmallShell::get_curr_dir()
+{
+    int size = 16;
+    try
+    {
+        char* pathCharArr = new char[size]();
+        pathCharArr = getcwd(pathCharArr, size);
+        while (pathCharArr == NULL && size <= 200)
+        {
+            size *= 2;
+            delete[](pathCharArr);
+            pathCharArr = new char[size]();
+            pathCharArr = getcwd(pathCharArr, size);
+        }
+        std::string pathStr(pathCharArr);
+        delete[](pathCharArr);
+        return pathStr;
+    }
+    catch (std::bad_alloc& e)
+    {
+        perror("smash error: malloc failed");
+        throw e;
+    }
+}
+
+
+string SmallShell::getPWD()
+{
+  char *temp_arr = new char[500];
+  temp_arr = getcwd(temp_arr, 500);
+  std::string path(temp_arr);
+  delete[] temp_arr;
+  return path;
+}
+
+void SmallShell::printJobsList()
+{
+  this->jobs_list->printJobsList();
+}
+
+int SmallShell::get_job_list_size()
+{
+  return this->jobs_list->getListSize();
+}
+
+void SmallShell::killAllJobs()
+{
+  jobs_list->killAllJobs();
+}
+
+string SmallShell::getPrompt()
+{
+  return this->prompt;
+}
+
 
 
 Command* SmallShell::CreateCommand(string command_line)
@@ -324,14 +460,31 @@ Command* SmallShell::CreateCommand(string command_line)
 
     std::string command_name = processed_command[0];
 
-
     if (command_name.compare("showpid") == 0) {
         return new ShowPidCommand(processed_command);
     }
+    else if (command_name.compare("cd") == 0) {
+        return new CDCommand(processed_command, this->last_dir);
+    }
+    
+    else if (command_name.compare("chprompt") == 0)
+    {
+        if(processed_command.getWordCount() > 1)
+          this->prompt = processed_command[1];
+        else
+          this->prompt = "smash";
+        return nullptr;
+    }
+    else if (command_name.compare("pwd") == 0) 
+      return new PWDCommand(processed_command);
+    else if (command_name.compare("jobs") == 0) 
+      return new JobsCommand(processed_command, nullptr);
+    else if (command_name.compare("quit") == 0) 
+      return new QuitCommand(processed_command, nullptr);
     return nullptr;
+  
+    
 }
-
-
 void SmallShell::executeCommand(string command_line)
 {
     
@@ -344,8 +497,3 @@ void SmallShell::executeCommand(string command_line)
     }
   
 }
-
-
-
-
-
