@@ -243,7 +243,78 @@ void ShowPidCommand::execute()
 
 
 
+KillCommand::KillCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
 
+void KillCommand::execute()
+{
+
+    int sigNum = -1, jobId = -1;
+
+    if (parsed_command.getWordCount() != 3)
+    {
+        std::cerr << "smash error: kill: invalid arguments" << std::endl;
+        return;
+    }
+
+    std::string sigNumArg = parsed_command[1];
+    std::string jobIdArg = parsed_command[2];
+
+    
+
+    try
+    {
+        sigNum = std::stoi(sigNumArg.substr(1, sigNumArg.length() - 1));
+        jobId = std::stoi(jobIdArg);
+    }
+    catch (std::invalid_argument const& ex)
+    {
+        std::cerr << "smash error: kill: invalid arguments" << std::endl;
+        return;
+    }
+    if (sigNumArg[0] != '-')
+    {
+        std::cerr << "smash error: kill: invalid arguments" << std::endl;
+        return;
+    }
+    JobsList::JobEntry* job = jobs->getJobById(jobId);
+    if (job == nullptr)
+    {
+        std::cerr << "smash error: kill: job-id " << jobId << " does not exist" << std::endl;
+        return;
+    }
+    if (kill(job->processId, 0) != 0)
+    {
+        return;
+    }
+    if (kill(job->processId, sigNum) == -1)
+    {
+        perror("smash error: kill failed");
+    }
+    else
+    {
+        std::cout << "signal number " << sigNum << " was sent to pid " << job->processId << std::endl;
+        if (sigNum == SIGSTOP || sigNum == SIGTSTP)
+        {
+            job->isStopped = true;
+        }
+        else if (sigNum == SIGCONT)
+        {
+            job->isStopped = false;
+        }
+        if (sigNum == SIGKILL)
+        {
+            int temp = waitpid(job->processId, NULL, 0);
+            if (temp == job->processId)
+            {
+                jobs->removeJobById(job->jobId);
+            }
+            else if (temp == -1)
+            {
+                perror("smash error: wait failed");
+            }
+        }
+    }
+}
 
 
 //--------------------------Job----------------------------------//
