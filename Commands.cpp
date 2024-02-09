@@ -441,6 +441,11 @@ void SmallShell::killAllJobs()
   jobs_list->killAllJobs();
 }
 
+string SmallShell::getPrompt()
+{
+  return this->prompt;
+}
+
 
 
 Command* SmallShell::CreateCommand(string command_line)
@@ -465,6 +470,8 @@ Command* SmallShell::CreateCommand(string command_line)
     {
         if(processed_command.getWordCount() > 1)
           this->prompt = processed_command[1];
+        else
+          this->prompt = "smash";
         return nullptr;
     }
     else if (command_name.compare("pwd") == 0) 
