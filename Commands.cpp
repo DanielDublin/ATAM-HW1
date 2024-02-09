@@ -35,10 +35,10 @@ CommandParser Command::getParsedCommand()
 
 CommandParser::CommandParser(string input) : raw_command(input), first_command(""), second_command(""), redirection(NONE), timeout(0)
 {
-    int first_whitespace_index = input.find_first_not_of(WHITESPACE);
-    int last_whitespace_index = input.find_last_not_of(WHITESPACE);
+    size_t first_whitespace_index = input.find_first_not_of(WHITESPACE);
+    size_t last_whitespace_index = input.find_last_not_of(WHITESPACE);
     this->is_background = input[last_whitespace_index] == '&';
-    this->is_complex = (input.find_first_of(COMPLEX_CHAR) != string::npos);
+    this->is_complex = ((size_t)input.find_first_of(COMPLEX_CHAR) != string::npos);
 
     if (this->is_background && last_whitespace_index != string::npos)
     {
@@ -52,7 +52,7 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
     int counter = 0;
     input.push_back(' '); //for better automation
 
-    for (int i = 0; i < input.length(); ++i)
+    for (size_t i = 0; i < input.length(); ++i)
     {
         if (input[i] == ' ')
         {
@@ -86,7 +86,7 @@ CommandParser::CommandParser(string input) : raw_command(input), first_command("
 
 
     // handling command based cases for stripping and inits
-    int redirection_index = input.find(">>"); // Append
+    size_t redirection_index = input.find(">>"); // Append
     if (redirection_index != string::npos)
     {
         this->first_command = cleanBackgroundCommand(input.substr(0, redirection_index));
