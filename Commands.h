@@ -101,15 +101,18 @@ class Job{
   };
 
   private:
-  int jobID = -1;
+  int jobID;
+  int pid;
   Command* command;
-  status currentStatus = status::FINISHED;
+  status currentStatus;
 
   public:
-  Job() = default;
+   Job(int pid);
   ~Job() = default;
   void setJobID(int id);
   int getJobID();
+  void setPid(int id);
+  int getPid();
   Job::status getCurrentStatus();
   void setCurrentStatus(Job::status status);
   void setCommand(Command *c);

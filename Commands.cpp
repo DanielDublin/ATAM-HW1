@@ -259,11 +259,15 @@ void KillCommand::execute()
     std::string signal_arg = parsed_command[1];
     std::string job_id_arg = parsed_command[2];
 
-    
+    if (signal_arg[0] != '-')
+    {
+        std::cerr << "smash error: kill: invalid arguments" << std::endl;
+        return;
+    }
 
     try
     {
-        sigal_number = std::stoi(signal_arg.substr(1, signal_arg.length() - 1));
+        sigal_number = std::stoi(signal_arg.substr(1, signal_arg.length() - 1)); // starting from after -
         job_id = std::stoi(job_id_arg);
     }
     catch (std::invalid_argument const& ex)
@@ -271,22 +275,21 @@ void KillCommand::execute()
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
         return;
     }
-    if (signal_arg[0] != '-')
-    {
-        std::cerr << "smash error: kill: invalid arguments" << std::endl;
-        return;
-    }
-    JobsList::JobEntry* job = jobs->getJobById(job_id);
+
+
+    Job* job = jobs->getJobById(job_id);
+
     if (job == nullptr)
     {
         std::cerr << "smash error: kill: job-id " << job_id << " does not exist" << std::endl;
         return;
     }
-    if (kill(job->processId, 0) != 0)
+
+    if (kill(job->pid, 0) != 0)
     {
         return;
     }
-    if (kill(job->processId, sigal_number) == -1)
+    else if (kill(job->processId, sigal_number) == -1)
     {
         perror("smash error: kill failed");
     }
@@ -318,12 +321,15 @@ void KillCommand::execute()
 
 
 //--------------------------Job----------------------------------//
+Job::Job(int pid) : pid(pid), jobID(-1), currentStatus(status::FINISHED) {}
 void Job::setJobID(int id) {jobID = id;}
 int Job::getJobID() {return jobID;}
 Job::status Job::getCurrentStatus() {return currentStatus;}
 void Job::setCurrentStatus(Job::status status) {currentStatus = status;}
 void Job::setCommand(Command *c) {command = c;}
 Command* Job::getCommand() {return command;}
+void Job::setPid(int id) { this->pid = pid; }
+int Job::getPid() { return this->pid; }
 
 
 //--------------------------JobsList----------------------------//
