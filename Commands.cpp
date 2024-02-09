@@ -323,7 +323,8 @@ Command* Job::getCommand() {return command;}
 //--------------------------JobsList----------------------------//
 JobsList::~JobsList()
 {
-  delete &list;
+  //no need for deletion here, it causes double free
+  ;
 }
 void JobsList::deleteFinishedJobs()
   {
@@ -384,7 +385,7 @@ SmallShell::SmallShell() : prompt("smash"), last_dir("") {
 }
 SmallShell::~SmallShell() {
   delete jobs_list;
-  delete time_out_jobs_list;
+  //delete time_out_jobs_list;
 }
 int SmallShell::get_max_num_of_processes() {return MAX_NUM_OF_PROCESSES;}
 int SmallShell::get_args_max() {return ARGS_MAX;}
