@@ -306,10 +306,9 @@ void FGCommand::execute()
     job_description.append(job->getParsedCommand().getRawCommanad());
     job_description.append(" : ").append(std::to_string(job->getPID()));
     job_description.append("\n");
-
     cout << job_description;
 
-    if (job->isStopped)
+    if (job->getisstopped)
     {
         if (kill(job->processId, 0) != 0)
         {
@@ -405,6 +404,8 @@ Job::Job(int jobID, int pid, Command* command, bool is_stopped) :
 void Job::setJobID(int id) {jobID = id;}
 int Job::getJobID() {return jobID;}
 int Job::getPID(){ return this->pid; }
+bool Job::getIsStopped() {return this->is_stopped; }
+void Job::setIsStopped(bool is_stopped) { this->is_stopped = is_stopped; }
 Job::status Job::getCurrentStatus() {return currentStatus;}
 void Job::setCurrentStatus(Job::status status) {currentStatus = status;}
 void Job::setCommand(Command *c) {command = c;}

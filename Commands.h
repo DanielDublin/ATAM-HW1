@@ -116,6 +116,8 @@ class Job{
   void setJobID(int id);
   int getJobID();
   int getPID();
+  bool getIsStopped();
+  void setIsStopped(bool is_stopped);
   Job::status getCurrentStatus();
   void setCurrentStatus(Job::status status);
   void setCommand(Command *c);
