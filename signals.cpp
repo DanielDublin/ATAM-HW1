@@ -30,6 +30,6 @@ void ctrlCHandler(int sig_num)
 void alarmHandler(int sig_num)
 {
     cout << "smash: got an alarm\n";
-    SmallShell::getInstance().getTimeoutList()->removeFinishedTimeouts();
-    SmallShell::getInstance().getTimeoutList()->addAlarm();
+    //SmallShell::getInstance().getTimeoutList()->removeFinishedTimeouts();
+   // SmallShell::getInstance().getTimeoutList()->addAlarm();
 }
