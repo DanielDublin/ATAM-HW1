@@ -262,8 +262,9 @@ void JobsCommand::execute()
 
 void FGCommand::execute()
 {
-    int job_id =-1;
+    int job_id =-1, job_pid = -1;
     Job* job = nullptr;
+    Command* current_command = nullptr;
     string job_description = "" ;
 
 
@@ -283,9 +284,9 @@ void FGCommand::execute()
             std::cerr << "smash error: fg: invalid arguments" << std::endl;
             return;
         }
+        
 
-
-        job = jobs_list->getJobById(job_id);
+        job = this->jobs_list->getJobById(job_id);
         if (job == nullptr)
         {
             std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << std::endl;
@@ -294,7 +295,7 @@ void FGCommand::execute()
     }
     else
     {
-        job = jobs_list->getLastJob(&job_id);
+        job = this->jobs_list->getLastJob(&job_id);
         if (job == nullptr)
         {
             std::cerr << "smash error: fg: jobs list is empty" << std::endl;
@@ -308,37 +309,43 @@ void FGCommand::execute()
     job_description.append("\n");
     cout << job_description;
 
-    if (job->getisstopped)
+
+    if (job->getIsStopped())
     {
-        if (kill(job->processId, 0) != 0)
+        if (kill(job->getPID(), 0) != 0)
         {
             return;
         }
-        if (kill(job->processId, SIGCONT) != 0)
+
+        if (kill(job->getPID(), SIGCONT) != 0)
         {
             perror("smash error: kill failed");
             return;
         }
     }
 
-    int jobPid = job->processId;
-    job->isStopped = false;
-    Command* curCmd = job->cmd;
+    job_pid = job->getPID();
+    job->setIsStopped(false);
+    current_command = job->getCommand();
 
-    SmallShell::getInstance().setForegroundCmd(curCmd);
-    if (waitpid(jobPid, NULL, WUNTRACED) == -1)
+    SmallShell::getInstance().setForegroundCmd(current_command);
+
+    if (waitpid(job_pid, NULL, WUNTRACED) == -1)
     {
         perror("smash error: wait failed");
         return;
     }
+
     SmallShell::getInstance().setForegroundCmd();
-    if (!job->isStopped)
+
+    if (!job->getIsStopped())
     {
-        jobs->removeJobById(job->job_id);
+        this->jobs_list->removeJobByID(job->getJobID());
     }
     else
     {
-        job->timeCreated = time(NULL);
+       // job->timeCreated = time(NULL);
+        int a = 0;
     }
 
 }
@@ -465,6 +472,26 @@ Job* JobsList::getLastJob(int* last_job_id)
 
     return list.back();
 }
+
+
+void JobsList::removeJobByID(int job_id)
+{
+    Job* target = nullptr;
+
+    for (int i = 0; i < (int)this->getListSize(); i++)
+    {
+        if (list[i]->getJobID() == job_id)
+        {
+            target = list[i];
+            list.erase(list.begin() + i);
+
+            delete(target);
+
+            break;
+        }
+    }
+}
+
 
 void JobsList::printJobsList()
   {
