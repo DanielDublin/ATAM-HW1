@@ -5,8 +5,6 @@
 #include <sstream>
 #include <unistd.h>
 #include<signal.h>
-
- 
 #include <iomanip>
 #include "Commands.h"
 
