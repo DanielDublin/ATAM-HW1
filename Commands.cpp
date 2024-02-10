@@ -4,7 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <unistd.h>
-#include<signal.h>
+#include <signal.h>
 #include <iomanip>
 #include "Commands.h"
 
@@ -245,158 +245,94 @@ QuitCommand::QuitCommand(CommandParser parsed_command, JobsList* jobs) : Command
 
 void ShowPidCommand::execute()
 {
-    std::cout << "smash pid is " << this->getPid() << std::endl;
+    cout << "smash pid is " << SmallShell::getInstance().get_Smash_Pid() << endl;
 }
+
+
+
+KillCommand::KillCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
+
+void KillCommand::execute()
+{
+
+    int sigal_number = -1, job_id = -1;
+
+    if (parsed_command.getWordCount() != 3)  // NEED TO CHECK IF THE ORDER OF ERRORS IS CORRECT - THE PDF IS BS -----------------------------------------------
+    {
+        std::cerr << "smash error: kill: invalid arguments" << endl;
+        return;
+    }
+
+    std::string signal_arg = parsed_command[1];
+    std::string job_id_arg = parsed_command[2];
+
+    if (signal_arg[0] != '-')
+    {
+        std::cerr << "smash error: kill: invalid arguments" << endl;
+        return;
+    }
+
+    try
+    {
+        sigal_number = std::stoi(signal_arg.substr(1, signal_arg.length() - 1)); // starting from after -
+        job_id = std::stoi(job_id_arg);
+    }
+    catch (std::invalid_argument const& ex)
+    {
+        std::cerr << "smash error: kill: invalid arguments" << endl;
+        return;
+    }
 
 void PWDCommand::execute() 
 {
     std::cout << SmallShell::getInstance().getPWD() << std::endl;
 }
 
-void JobsCommand::execute() 
-{
-    SmallShell::getInstance().printJobsList();
-}
+    Job* job = jobs->getJobById(job_id);
 
-void FGCommand::execute()
-{
-    int job_id =-1, job_pid = -1;
-    string job_description = "";
-    Job* job = nullptr;
-    Command* current_command = nullptr;
-    
-    // check args
-    if (parsed_command.getWordCount() > 2)
+    if (job == nullptr) // existance check
     {
-        std::cerr << "smash error: fg: invalid arguments" << std::endl;
+        std::cerr << "smash error: kill: job-id " << job_id << " does not exist" << endl;
         return;
     }
-    else if (parsed_command.getWordCount() == 2) // get job from list
+
+    if (kill(job->getPid(), 0) != 0) // check for errors as preperation
     {
-        try
-        {
-            job_id = std::stoi(parsed_command[1]);
-        }
-        catch (std::invalid_argument const& ex)
-        {
-            std::cerr << "smash error: fg: invalid arguments" << std::endl;
-            return;
-        }
+        return;
+    }
+
+    if (kill(job->getPid(), sigal_number) == -1) // send sig
+    {
+        perror("smash error: kill failed");
+    }
+    else 
+    {
         
+        cout << "signal number " << sigal_number << " was sent to pid " << job->getPid() << endl;
 
-        job = this->jobs_list->getJobById(job_id);
-        if (job == nullptr)
+        if (sigal_number == SIGSTOP || sigal_number == SIGTSTP)
         {
-            std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << std::endl;
-            return;
+            job->setIsStopped(true);
         }
-    }
-    else // get the highest job (which is the last one on the list)
-    {
-        job = this->jobs_list->getLastJob(&job_id);
-        if (job == nullptr)
+        else if (sigal_number == SIGCONT)
         {
-            std::cerr << "smash error: fg: jobs list is empty" << std::endl;
-            return;
+            job->setIsStopped(false);
         }
-    }
-
-    
-    job_description.append(job->getParsedCommand().getRawCommanad());
-    job_description.append(" : ").append(std::to_string(job->getPID()));
-    cout << job_description << endl;
-
-
-    if (job->getIsStopped())
-    {
-        if (kill(job->getPID(), 0) != 0)  // check channel for errors
+        else if (sigal_number == SIGKILL)
         {
-            return;
+            int child_pid = waitpid(job->getPid(), NULL, 0);
+
+            if (child_pid == job->getPid())
+            {
+                jobs->removeJob(job->getJobID());
+            }
+            else if (child_pid == -1)
+            {
+                perror("smash error: wait failed");
+            }
         }
-
-        if (kill(job->getPID(), SIGCONT) != 0)
-        {
-            perror("smash error: kill failed");
-            return;
-        }
-    }
-
-    job_pid = job->getPID();
-    job->setIsStopped(false);
-    current_command = job->getCommand();
-
-    SmallShell::getInstance().setForegroundCommand(current_command); // force the background process to run in foreground
-
-    if (waitpid(job_pid, NULL, WUNTRACED) == -1)
-    {
-        perror("smash error: wait failed");
-        return;
-    }
-
-    SmallShell::getInstance().setForegroundCommand(); // reset the current foreground command  - not built-in
-
-    if (!job->getIsStopped())
-    {
-        this->jobs_list->removeJobByID(job->getJobID());
-    }
-    else
-    {
-       // job->timeCreated = time(NULL);
-        int a = 0;
-    }
-
-}
-
-void QuitCommand::execute() 
-{
-  if (parsed_command.getWordCount() > 1 && parsed_command[1].compare("kill") == 0)
-  {
-    cout << "smash: sending SIGKILL signal to " << SmallShell::getInstance().get_job_list_size() << " jobs:" << endl;
-    SmallShell::getInstance().killAllJobs();
-  }
-
-  exit(0);
-}
-
-void CDCommand::execute()
-{
-    if (parsed_command.getWordCount() < 2)
-    {
-        std::cerr << "smash error:> \"" << parsed_command.getRawCommanad() << "\"" << endl;
-        return;
-    }
-    if (parsed_command.getWordCount() > 2)
-    {
-        std::cerr << "smash error: cd: too many arguments\n";
-        return;
-    }
-    std::string currDir = SmallShell::getInstance().get_curr_dir();
-    if (parsed_command[1].compare("-") == 0)
-    {
-        if (last_dir.compare("") == 0)
-        {
-            std::cerr << "smash error: cd: OLDPWD not set" << endl;
-            return;
-        }
-        if (chdir(last_dir.c_str()) == -1)
-        {
-            perror("smash error: chdir failed");
-            return;
-        }
-        last_dir = currDir;
-    }
-    else if (chdir(parsed_command[1].c_str()) == -1)
-    {
-        perror("smash error: chdir failed");
-        return;
-    }
-    else
-    {
-        last_dir = currDir;
     }
 }
-
-
 
 
 //--------------------------Job----------------------------------//
@@ -414,9 +350,10 @@ Job::status Job::getCurrentStatus() {return currentStatus;}
 void Job::setCurrentStatus(Job::status status) {currentStatus = status;}
 void Job::setCommand(Command *c) {command = c;}
 Command* Job::getCommand() {return command;}
-CommandParser Job::getParsedCommand() { return this->parsed_command; }
-
-
+void Job::setPid(int id) { this->pid = pid; }
+int Job::getPid() { return this->pid; }
+void Job::setIsStopped(bool is_stopped) { this->is_stopped = is_stopped; }
+bool Job::getIsStopped() { return this->is_stopped; }
 
 //--------------------------JobsList----------------------------//
 JobsList::~JobsList()
@@ -442,6 +379,24 @@ void JobsList::addJobToList(Job* j)
     list.push_back(j);
 
   }
+
+
+void JobsList::removeJob(int job_id)
+{
+    for (int i = 0; i < (int)this->list.size(); i++)
+    {
+        if (list[i]->getJobID() == job_id)
+        {
+            Job* target_job = list[i];
+            list.erase(list.begin() + i);
+
+            delete(target_job);
+            break;
+        }
+    }
+}
+
+
 Job* JobsList::getJobById(int job_id)
   {
     JobsList::deleteFinishedJobs();
