@@ -133,7 +133,7 @@ class JobsList{
   Job *getJobById(int jobId);
   void printJobsList();
   int getListSize();
-  void killAllJobs();
+   void killAllJobs();
 };
 
 /*
@@ -308,8 +308,8 @@ class SmallShell {
   int smash_pid;
   string prompt = "smash";
   string last_dir = "";
-  JobsList *jobs_list;
-  JobsList *time_out_jobs_list;
+  JobsList* jobs_list;
+  JobsList* time_out_jobs_list;
   const int MAX_NUM_OF_PROCESSES = 100;
   const int ARGS_MAX = 21;
   const int COMMAND_SIZE_MAX = 80;
@@ -327,6 +327,7 @@ class SmallShell {
   int get_job_list_size();
   void printJobsList();
   void killAllJobs();
+  JobsList* getJobsList();
 
 };
 

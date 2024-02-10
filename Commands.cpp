@@ -437,6 +437,8 @@ int SmallShell::get_job_list_size()
   return this->jobs_list->getListSize();
 }
 
+JobsList* SmallShell::getJobsList() { return this->jobs_list; }
+
 void SmallShell::killAllJobs()
 {
   jobs_list->killAllJobs();
@@ -479,6 +481,9 @@ Command* SmallShell::CreateCommand(string command_line)
       return new PWDCommand(processed_command);
     else if (command_name.compare("jobs") == 0) 
       return new JobsCommand(processed_command, nullptr);
+    else if (command_name.compare("fg") == 0) {
+        return new FGCommand(processed_command, this->getJobsList());
+    }
     else if (command_name.compare("quit") == 0) 
       return new QuitCommand(processed_command, nullptr);
     return nullptr;
