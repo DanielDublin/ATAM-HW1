@@ -328,7 +328,7 @@ void FGCommand::execute()
     job->setIsStopped(false);
     current_command = job->getCommand();
 
-    SmallShell::getInstance().setForegroundCmd(current_command);
+    SmallShell::getInstance().setForegroundCommand(current_command);
 
     if (waitpid(job_pid, NULL, WUNTRACED) == -1)
     {
@@ -336,7 +336,7 @@ void FGCommand::execute()
         return;
     }
 
-    SmallShell::getInstance().setForegroundCmd();
+    SmallShell::getInstance().setForegroundCommand();
 
     if (!job->getIsStopped())
     {
