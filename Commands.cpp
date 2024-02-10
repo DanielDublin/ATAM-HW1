@@ -722,23 +722,29 @@ Command* SmallShell::CreateCommand(string command_line)
     else if (command_name.compare("cd") == 0) {
         return new CDCommand(processed_command, this->last_dir);
     }
-    
     else if (command_name.compare("chprompt") == 0)
     {
         return new ChromptCommand(processed_command);
     }
-    else if (command_name.compare("pwd") == 0) 
-      return new PWDCommand(processed_command);
-    else if (command_name.compare("jobs") == 0) 
-      return new JobsCommand(processed_command, nullptr);
-    else if (command_name.compare("fg") == 0) {
+    else if (command_name.compare("pwd") == 0)
+    {
+        return new PWDCommand(processed_command);
+    }
+    else if (command_name.compare("jobs") == 0)
+    {
+        return new JobsCommand(processed_command, nullptr);
+    }
+    else if (command_name.compare("fg") == 0) 
+    {
         return new FGCommand(processed_command, this->getJobsList());
     }
     else if (command_name.compare("kill") == 0) {
         return new KillCommand(processed_command, this->getJobsList());
     }
-    else if (command_name.compare("quit") == 0) 
-      return new QuitCommand(processed_command, nullptr);
+    else if (command_name.compare("quit") == 0)
+    {
+        return new QuitCommand(processed_command, nullptr);
+    }
     return nullptr;
   
     
