@@ -1,13 +1,10 @@
- 
 #include <string.h>
 #include <iostream>
 #include <vector>
-#include <sstream>
 #include <unistd.h>
 #include <signal.h>
 #include <iomanip>
 #include "Commands.h"
-
 
 
 
@@ -211,7 +208,7 @@ string CommandParser::cleanBackgroundCommand(string input)
     int start_index = input.find_first_not_of(WHITESPACE);
     int end_index = input.find_last_not_of(WHITESPACE);
    
-    if (end_index != (int)std::string::npos && is_background)
+    if (end_index != (int)string::npos && is_background)
     {
         input = input.substr(start_index, end_index - start_index);
     }
@@ -689,6 +686,8 @@ void SmallShell::setForegroundCommand(Command* new_command)
     this->foregroundCommand = new_command;
 }
 
+    return nullptr;
+}
 
 Command* SmallShell::CreateCommand(string command_line)
 {
@@ -699,7 +698,7 @@ Command* SmallShell::CreateCommand(string command_line)
         return nullptr;
     }
 
-    std::string command_name = processed_command[0];
+    string command_name = processed_command[0];
 
     if (command_name.compare("showpid") == 0) {
         return new ShowPidCommand(processed_command);
