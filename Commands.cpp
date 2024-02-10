@@ -260,6 +260,86 @@ void JobsCommand::execute()
     SmallShell::getInstance().printJobsList();
 }
 
+void FGCommand::execute()
+{
+    int job_id =-1;
+    Job* job;
+
+
+    if (parsed_command.getWordCount() > 2)
+    {
+        std::cerr << "smash error: fg: invalid arguments" << std::endl;
+        return;
+    }
+
+
+    if (parsed_command.getWordCount() == 2)
+    {
+        try
+        {
+            job_id = std::stoi(parsed_command[1]);
+        }
+        catch (std::invalid_argument const& ex)
+        {
+            std::cerr << "smash error: fg: invalid arguments" << std::endl;
+            return;
+        }
+        job = jobs_list->getJobById(job_id);
+        if (job == nullptr)
+        {
+            std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << std::endl;
+            return;
+        }
+    }
+    else
+    {
+        job = jobs_list->getLastJob(&job_id);
+        if (job == nullptr)
+        {
+            std::cerr << "smash error: fg: jobs list is empty" << std::endl;
+            return;
+        }
+    }
+
+    std::string jobLine("");
+    jobLine.append(job->parsed_command.getRaw()).append(" : ").append(std::to_string(job->processId)).append("\n");
+    std::cout << jobLine;
+
+    if (job->isStopped)
+    {
+        if (kill(job->processId, 0) != 0)
+        {
+            return;
+        }
+        if (kill(job->processId, SIGCONT) != 0)
+        {
+            perror("smash error: kill failed");
+            return;
+        }
+    }
+
+    int jobPid = job->processId;
+    job->isStopped = false;
+    Command* curCmd = job->cmd;
+
+    SmallShell::getInstance().setForegroundCmd(curCmd);
+    if (waitpid(jobPid, NULL, WUNTRACED) == -1)
+    {
+        perror("smash error: wait failed");
+        return;
+    }
+    SmallShell::getInstance().setForegroundCmd();
+    if (!job->isStopped)
+    {
+        jobs->removeJobById(job->job_id);
+    }
+    else
+    {
+        job->timeCreated = time(NULL);
+    }
+
+}
+
 void QuitCommand::execute() 
 {
   if (parsed_command.getWordCount() > 1 && parsed_command[1].compare("kill") == 0)
@@ -345,15 +425,34 @@ void JobsList::addJobToList(Job* j)
     list.push_back(j);
 
   }
-Job* JobsList::getJobById(int jobId)
+Job* JobsList::getJobById(int job_id)
   {
     JobsList::deleteFinishedJobs();
     Job *j = NULL;
     for(unsigned int i = 0; i < list.size(); i++)
-      if (list[i]->getJobID() == jobId)
+      if (list[i]->getJobID() == job_id)
         j = list[i];
     return j;
   }
+
+
+Job* JobsList::getLastJob(int* last_job_id)
+{
+    this->deleteFinishedJobs();
+
+    if (this->list.empty())
+    {
+        return nullptr;
+    }
+
+    if (last_job_id != nullptr)
+    {
+        *last_job_id = list.back()->getJobID();
+    }
+
+    return list.back();
+}
+
 void JobsList::printJobsList()
   {
     JobsList::deleteFinishedJobs();
