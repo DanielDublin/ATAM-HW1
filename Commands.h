@@ -104,12 +104,14 @@ class Job{
 
   private:
   int jobID = -1;
+  int pid;
+  bool is_stopped;
   Command* command;
-  CommandParser* parsed_command;
+  CommandParser parsed_command;
   status currentStatus = status::FINISHED;
 
   public:
-  Job() = default;
+  Job(int jobID, int pid, Command* command, bool is_stopped);
   ~Job() = default;
   void setJobID(int id);
   int getJobID();

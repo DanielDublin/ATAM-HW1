@@ -394,12 +394,18 @@ void CDCommand::execute()
 
 
 //--------------------------Job----------------------------------//
+Job::Job(int jobID, int pid, Command* command, bool is_stopped) :
+    jobID(jobID), pid(pid), command(command), parsed_command(command->getParsedCommand()), is_stopped(is_stopped) {}
+
+
+
 void Job::setJobID(int id) {jobID = id;}
 int Job::getJobID() {return jobID;}
 Job::status Job::getCurrentStatus() {return currentStatus;}
 void Job::setCurrentStatus(Job::status status) {currentStatus = status;}
 void Job::setCommand(Command *c) {command = c;}
 Command* Job::getCommand() {return command;}
+
 
 
 //--------------------------JobsList----------------------------//
