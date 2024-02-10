@@ -282,7 +282,7 @@ class SmallShell {
   private:
   SmallShell();
   public:
-  Command *CreateCommand(string cmd_line);
+  Command *CreateCommand(string command_line);
   SmallShell(SmallShell const&)      = delete; // disable copy ctor
   void operator=(SmallShell const&)  = delete; // disable = operator
   static SmallShell& getInstance() // make SmallShell singleton
@@ -292,7 +292,7 @@ class SmallShell {
     return instance;
   }
   ~SmallShell();
-  void executeCommand(string cmd_line);
+  void executeCommand(string command_line);
 
   private:
   int smash_pid;
