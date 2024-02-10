@@ -1,12 +1,11 @@
-#include <string.h>
+#include <string>
 #include <iostream>
 #include <vector>
 #include <unistd.h>
 #include <signal.h>
-#include <iomanip>
 #include "Commands.h"
 
-
+using namespace std;
 
 /*------------------Command--------------------*/
 
@@ -232,7 +231,7 @@ string& CommandParser::operator[](int index)
 
 /*--------------------------------------------------Built-in commands--------------------------------------------------*/
 
-
+ChromptCommand::ChromptCommand(CommandParser parsed_command) : Command(parsed_command) {}
 ShowPidCommand::ShowPidCommand(CommandParser parsed_command) : Command(parsed_command) {}
 CDCommand::CDCommand(CommandParser parsed_command, string& last_dir) : Command(parsed_command), last_dir(last_dir) {}
 PWDCommand::PWDCommand(CommandParser parsed_command) : Command(parsed_command) {}
@@ -240,6 +239,21 @@ JobsCommand::JobsCommand(CommandParser parsed_command, JobsList* jobs) : Command
 FGCommand::FGCommand(CommandParser parsed_command, JobsList* jobs_list) : Command(parsed_command), jobs_list(jobs_list) {}
 QuitCommand::QuitCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command) {}
 KillCommand::KillCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
+
+
+
+
+void ChromptCommand::execute()
+{
+    if (this->getParsedCommand().getWordCount() > 1)
+    {
+        SmallShell::getInstance().setPrompt(this->getParsedCommand()[1]);
+    }
+    else
+    {
+        SmallShell::getInstance().setPrompt("smash");
+    }
+}
 
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
@@ -368,32 +382,36 @@ void QuitCommand::execute()
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
+
 void CDCommand::execute()
 {
-    if (parsed_command.getWordCount() < 2)
+    if (parsed_command.getWordCount() < 2)   // no args
     {
         std::cerr << "smash error:> \"" << parsed_command.getRawCommanad() << "\"" << endl;
         return;
     }
-    if (parsed_command.getWordCount() > 2)
+    else if (parsed_command.getWordCount() > 2) // too many args
     {
         std::cerr << "smash error: cd: too many arguments\n";
         return;
     }
-    std::string currDir = SmallShell::getInstance().get_curr_dir();
+
+
+    string curr_dir = SmallShell::getInstance().getCurrentDir(); //change to a better name later --------------------------------------------------------------------------
+
     if (parsed_command[1].compare("-") == 0)
     {
-        if (last_dir.compare("") == 0)
+        if (this->last_dir.compare("") == 0)
         {
             std::cerr << "smash error: cd: OLDPWD not set" << endl;
             return;
         }
-        if (chdir(last_dir.c_str()) == -1)
+        if (chdir(this->last_dir.c_str()) == -1)
         {
             perror("smash error: chdir failed");
             return;
         }
-        last_dir = currDir;
+        this->last_dir = curr_dir;
     }
     else if (chdir(parsed_command[1].c_str()) == -1)
     {
@@ -402,9 +420,10 @@ void CDCommand::execute()
     }
     else
     {
-        last_dir = currDir;
+        this->last_dir = curr_dir;
     }
 }
+
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 void KillCommand::execute()
@@ -501,10 +520,10 @@ Job::status Job::getCurrentStatus() {return currentStatus;}
 void Job::setCurrentStatus(Job::status status) {currentStatus = status;}
 void Job::setCommand(Command *c) {command = c;}
 Command* Job::getCommand() {return command;}
-void Job::setPid(int id) { this->pid = pid; }
-int Job::getPid() { return this->pid; }
+void Job::setPID(int pid) { this->pid = pid; }
 void Job::setIsStopped(bool is_stopped) { this->is_stopped = is_stopped; }
 bool Job::getIsStopped() { return this->is_stopped; }
+CommandParser Job::getParsedCommand() { return this->parsed_command; }
 
 //--------------------------JobsList----------------------------//
 JobsList::~JobsList()
@@ -618,32 +637,30 @@ int SmallShell::get_max_num_of_processes() {return MAX_NUM_OF_PROCESSES;}
 int SmallShell::get_args_max() {return ARGS_MAX;}
 int SmallShell::get_command_size_max() {return COMMAND_SIZE_MAX;}
 int SmallShell::get_process_name_max() {return PROCESS_NAME_MAX;}
+int SmallShell::get_smash_pid() { return this->smash_pid; }
+void SmallShell::setPrompt(string new_prompt) { this->prompt = new_prompt; }
 
-string& SmallShell::get_curr_dir()
+string SmallShell::getCurrentDir()
 {
-    int size = 16;
+    int size = COMMAND_ARGS_MAX_LENGTH;
+
     try
     {
         char* pathCharArr = new char[size]();
         pathCharArr = getcwd(pathCharArr, size);
-        while (pathCharArr == NULL && size <= 200)
-        {
-            size *= 2;
-            delete[](pathCharArr);
-            pathCharArr = new char[size]();
-            pathCharArr = getcwd(pathCharArr, size);
-        }
-        std::string pathStr(pathCharArr);
+
+        string pathStr(pathCharArr);
         delete[](pathCharArr);
+
         return pathStr;
     }
-    catch (std::bad_alloc& e)
+    catch (std::bad_alloc& e)  //need to remove
     {
-        perror("smash error: malloc failed");
         throw e;
     }
-}
 
+    return nullptr;
+}
 
 string SmallShell::getPWD()
 {
@@ -686,8 +703,7 @@ void SmallShell::setForegroundCommand(Command* new_command)
     this->foregroundCommand = new_command;
 }
 
-    return nullptr;
-}
+
 
 Command* SmallShell::CreateCommand(string command_line)
 {
@@ -709,11 +725,7 @@ Command* SmallShell::CreateCommand(string command_line)
     
     else if (command_name.compare("chprompt") == 0)
     {
-        if(processed_command.getWordCount() > 1)
-          this->prompt = processed_command[1];
-        else
-          this->prompt = "smash";
-        return nullptr;
+        return new ChromptCommand(processed_command);
     }
     else if (command_name.compare("pwd") == 0) 
       return new PWDCommand(processed_command);
@@ -721,6 +733,9 @@ Command* SmallShell::CreateCommand(string command_line)
       return new JobsCommand(processed_command, nullptr);
     else if (command_name.compare("fg") == 0) {
         return new FGCommand(processed_command, this->getJobsList());
+    }
+    else if (command_name.compare("kill") == 0) {
+        return new KillCommand(processed_command, this->getJobsList());
     }
     else if (command_name.compare("quit") == 0) 
       return new QuitCommand(processed_command, nullptr);

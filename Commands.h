@@ -116,6 +116,7 @@ class Job{
   void setJobID(int id);
   int getJobID();
   int getPID();
+  void setPID(int pid);
   bool getIsStopped();
   void setIsStopped(bool is_stopped);
   Job::status getCurrentStatus();
@@ -338,8 +339,8 @@ class SmallShell {
   int get_command_size_max();
   int get_process_name_max();
   int get_smash_pid();
-  string& get_curr_dir();
   string getPrompt();
+  void setPrompt(string new_prompt);
   string getPWD();
   Command* getForegroundCommand();
   void setForegroundCommand(Command* new_command = nullptr);
@@ -347,6 +348,8 @@ class SmallShell {
   void printJobsList();
   void killAllJobs();
   JobsList* getJobsList();
+  int get_smash_pid();
+  string getCurrentDir();
 
 };
 
