@@ -257,7 +257,7 @@ void CDCommand::execute()
     }
 
 
-    string curr_dir = SmallShell::getInstance().get_curr_dir(); //change to a better name later --------------------------------------------------------------------------
+    string curr_dir = SmallShell::getInstance().getCurrentDir(); //change to a better name later --------------------------------------------------------------------------
 
     if (parsed_command[1].compare("-") == 0)  
     {
@@ -352,7 +352,7 @@ int SmallShell::get_command_size_max() {return COMMAND_SIZE_MAX;}
 int SmallShell::get_process_name_max() {return PROCESS_NAME_MAX;}
 int SmallShell::get_smash_pid() {return this->smash_pid;}
 
-string SmallShell::get_curr_dir()
+string SmallShell::getCurrentDir()
 {
     int size = COMMAND_ARGS_MAX_LENGTH;
 
