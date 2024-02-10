@@ -233,7 +233,7 @@ string& CommandParser::operator[](int index)
 
 
 
-/*----------------Built-in commands--------------------*/
+/*--------------------------------------------------Built-in commands--------------------------------------------------*/
 
 
 ShowPidCommand::ShowPidCommand(CommandParser parsed_command) : Command(parsed_command) {}
@@ -242,22 +242,30 @@ PWDCommand::PWDCommand(CommandParser parsed_command) : Command(parsed_command) {
 JobsCommand::JobsCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command) {}
 FGCommand::FGCommand(CommandParser parsed_command, JobsList* jobs_list) : Command(parsed_command), jobs_list(jobs_list) {}
 QuitCommand::QuitCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command) {}
+KillCommand::KillCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
 
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
 void ShowPidCommand::execute()
 {
     std::cout << "smash pid is " << this->getPid() << std::endl;
 }
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
 
 void PWDCommand::execute()
 {
     std::cout << SmallShell::getInstance().getPWD() << std::endl;
 }
 
+/*-----------------------------------------------------------------------------------------------------------------------*/
 
 void JobsCommand::execute()
 {
     SmallShell::getInstance().printJobsList();
 }
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
 
 void FGCommand::execute()
 {
@@ -348,6 +356,8 @@ void FGCommand::execute()
 
 }
 
+/*-----------------------------------------------------------------------------------------------------------------------*/
+
 void QuitCommand::execute()
 {
     if (parsed_command.getWordCount() > 1 && parsed_command[1].compare("kill") == 0)
@@ -358,6 +368,8 @@ void QuitCommand::execute()
 
     exit(0);
 }
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
 
 void CDCommand::execute()
 {
@@ -397,12 +409,7 @@ void CDCommand::execute()
     }
 }
 
-
-
-
-
-KillCommand::KillCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
-
+/*-----------------------------------------------------------------------------------------------------------------------*/
 void KillCommand::execute()
 {
 
@@ -482,7 +489,7 @@ void KillCommand::execute()
 }
 
 
-//--------------------------Job----------------------------------//
+//-----------------------------------------------------Job-----------------------------------------------//
 Job::Job(int jobID, int pid, Command* command, bool is_stopped) :
     jobID(jobID), pid(pid), command(command), parsed_command(command->getParsedCommand()), is_stopped(is_stopped) {}
 
