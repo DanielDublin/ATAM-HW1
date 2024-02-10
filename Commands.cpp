@@ -263,17 +263,17 @@ void JobsCommand::execute()
 void FGCommand::execute()
 {
     int job_id =-1, job_pid = -1;
+    string job_description = "";
     Job* job = nullptr;
     Command* current_command = nullptr;
-    string job_description = "" ;
-
-
+    
+    // check args
     if (parsed_command.getWordCount() > 2)
     {
         std::cerr << "smash error: fg: invalid arguments" << std::endl;
         return;
     }
-    else if (parsed_command.getWordCount() == 2)
+    else if (parsed_command.getWordCount() == 2) // get job from list
     {
         try
         {
@@ -293,7 +293,7 @@ void FGCommand::execute()
             return;
         }
     }
-    else
+    else // get the highest job (which is the last one on the list)
     {
         job = this->jobs_list->getLastJob(&job_id);
         if (job == nullptr)
@@ -306,13 +306,12 @@ void FGCommand::execute()
     
     job_description.append(job->getParsedCommand().getRawCommanad());
     job_description.append(" : ").append(std::to_string(job->getPID()));
-    job_description.append("\n");
-    cout << job_description;
+    cout << job_description << endl;
 
 
     if (job->getIsStopped())
     {
-        if (kill(job->getPID(), 0) != 0)
+        if (kill(job->getPID(), 0) != 0)  // check channel for errors
         {
             return;
         }
@@ -328,7 +327,7 @@ void FGCommand::execute()
     job->setIsStopped(false);
     current_command = job->getCommand();
 
-    SmallShell::getInstance().setForegroundCommand(current_command);
+    SmallShell::getInstance().setForegroundCommand(current_command); // force the background process to run in foreground
 
     if (waitpid(job_pid, NULL, WUNTRACED) == -1)
     {
@@ -336,7 +335,7 @@ void FGCommand::execute()
         return;
     }
 
-    SmallShell::getInstance().setForegroundCommand();
+    SmallShell::getInstance().setForegroundCommand(); // reset the current foreground command  - not built-in
 
     if (!job->getIsStopped())
     {
