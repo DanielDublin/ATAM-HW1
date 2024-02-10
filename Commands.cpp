@@ -259,14 +259,14 @@ void ChromptCommand::execute()
 /*-----------------------------------------------------------------------------------------------------------------------*/
 void ShowPidCommand::execute()
 {
-    std::cout << "smash pid is " << this->getPid() << std::endl;
+    cout << "smash pid is " << this->getPid() << endl;
 }
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
 void PWDCommand::execute()
 {
-    std::cout << SmallShell::getInstance().getPWD() << std::endl;
+    cout << SmallShell::getInstance().getPWD() << endl;
 }
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
@@ -288,7 +288,7 @@ void FGCommand::execute()
     // check args
     if (parsed_command.getWordCount() > 2)
     {
-        std::cerr << "smash error: fg: invalid arguments" << std::endl;
+        std::cerr << "smash error: fg: invalid arguments" << endl;
         return;
     }
     else if (parsed_command.getWordCount() == 2) // get job from list
@@ -299,7 +299,7 @@ void FGCommand::execute()
         }
         catch (std::invalid_argument const& ex)
         {
-            std::cerr << "smash error: fg: invalid arguments" << std::endl;
+            std::cerr << "smash error: fg: invalid arguments" << endl;
             return;
         }
 
@@ -307,7 +307,7 @@ void FGCommand::execute()
         job = this->jobs_list->getJobById(job_id);
         if (job == nullptr)
         {
-            std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << std::endl;
+            std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << endl;
             return;
         }
     }
@@ -316,7 +316,7 @@ void FGCommand::execute()
         job = this->jobs_list->getLastJob(&job_id);
         if (job == nullptr)
         {
-            std::cerr << "smash error: fg: jobs list is empty" << std::endl;
+            std::cerr << "smash error: fg: jobs list is empty" << endl;
             return;
         }
     }
@@ -430,6 +430,9 @@ void KillCommand::execute()
 {
 
     int sigal_number = -1, job_id = -1;
+    string signal_arg = "";
+    string job_id_arg = "";
+    Job* job = nullptr;
 
     if (parsed_command.getWordCount() != 3)  // NEED TO CHECK IF THE ORDER OF ERRORS IS CORRECT - THE PDF IS BS -----------------------------------------------
     {
@@ -437,8 +440,8 @@ void KillCommand::execute()
         return;
     }
 
-    std::string signal_arg = parsed_command[1];
-    std::string job_id_arg = parsed_command[2];
+    signal_arg = parsed_command[1];
+    job_id_arg = parsed_command[2];
 
     if (signal_arg[0] != '-')
     {
@@ -458,7 +461,7 @@ void KillCommand::execute()
     }
 
 
-    Job* job = jobs->getJobById(job_id);
+    job = jobs->getJobById(job_id);
 
     if (job == nullptr) // existance check
     {
@@ -541,12 +544,12 @@ void JobsList::deleteFinishedJobs()
       if (list[i]->getJobID() > maxJobID)
         maxJobID = list[i]->getJobID();
   }
-void JobsList::addJobToList(Job* j)
+void JobsList::addJobToList(Job* target_job)
   {
     JobsList::deleteFinishedJobs();
     maxJobID++;
-    j->setJobID(maxJobID);
-    list.push_back(j);
+    target_job->setJobID(maxJobID);
+    list.push_back(target_job);
 
   }
 
@@ -614,7 +617,7 @@ void JobsList::printJobsList()
     JobsList::deleteFinishedJobs();
     for(int i = 0; i < list.size(); i++)
       {
-        std::cout << list[i]->getCommand()->getPid() << ": " << list[i]->getCommand()->getParsedCommand().getRawCommanad() << std::endl;
+        cout << list[i]->getCommand()->getPid() << ": " << list[i]->getCommand()->getParsedCommand().getRawCommanad() << endl;
         kill(list[i]->getCommand()->getPid(), SIGKILL);
         list[i]->setCurrentStatus(Job::status::FINISHED);
       }
@@ -666,7 +669,7 @@ string SmallShell::getPWD()
 {
   char *temp_arr = new char[500];
   temp_arr = getcwd(temp_arr, 500);
-  std::string path(temp_arr);
+  string path(temp_arr);
   delete[] temp_arr;
   return path;
 }

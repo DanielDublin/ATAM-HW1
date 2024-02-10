@@ -3,14 +3,15 @@
 
 #include <vector>
 #include <iostream>
+#include <string>
 
 
 #define COMMAND_ARGS_MAX_LENGTH (80)
 #define COMMAND_MAX_ARGS (20)
 
 using namespace std;
-const std::string WHITESPACE = " \n\r\t\f\v";
-const std::string COMPLEX_CHAR = "?*";
+const string WHITESPACE = " \n\r\t\f\v";
+const string COMPLEX_CHAR = "?*";
 
 
 
@@ -33,13 +34,13 @@ class CommandParser
         };
 
         CommandParser() = delete;
-        CommandParser(std::string input);
+        CommandParser(string input);
         ~CommandParser() = default;
 
-        std::string getRawCommanad();
-        std::string getFirstCommand();
-        std::string getSecondCommand();
-        std::string getCleanCommand();
+        string getRawCommanad();
+        string getFirstCommand();
+        string getSecondCommand();
+        string getCleanCommand();
 
         bool getIsBackground();
         bool getIsComplex();
@@ -48,18 +49,18 @@ class CommandParser
         redirectionType getRedirection();
 
 
-        std::string& operator[](int index);
+        string& operator[](int index);
 
     private:      
 
         const static int TIMEOUT_ARG_COUNT = 2;
         static const int MAX_WORD_COUNT = 21;  // Command + 20 args
 
-        std::string raw_command;
-        std::string first_command;
-        std::string second_command;
-        std::string stripped_flagless_command;
-        std::string stripped_words[MAX_WORD_COUNT];
+        string raw_command;
+        string first_command;
+        string second_command;
+        string stripped_flagless_command;
+        string stripped_words[MAX_WORD_COUNT];
         
         redirectionType redirection;
         bool is_background;
@@ -67,7 +68,7 @@ class CommandParser
         int word_count;
         int timeout;
 
-        static std::string cleanBackgroundCommand(std::string input);
+        static string cleanBackgroundCommand(string input);
 };
 
 
@@ -138,7 +139,7 @@ class JobsList{
   JobsList() = default;
   ~JobsList();
   void deleteFinishedJobs();
-  void addJobToList(Job* j);
+  void addJobToList(Job* target_job);
   void removeJob(int job_id);
   Job* getJobById(int jobId);
   Job* getLastJob(int* last_job_id);
@@ -179,8 +180,8 @@ public:
 class CDCommand : public Command {
 
 public:
-    std::string& last_dir;
-    CDCommand(CommandParser parsed_command, std::string& last_dir);
+    string& last_dir;
+    CDCommand(CommandParser parsed_command, string& last_dir);
     virtual ~CDCommand() = default;
     void execute() override;
 };
@@ -244,7 +245,7 @@ public:
 /*-------------------------Special commands-------------------*/
 
 class RedirectionCommand : public Command {
-    std::string filePath;
+    string filePath;
 public:
     explicit RedirectionCommand(CommandParser parsed_command);
     virtual ~RedirectionCommand() = default;
