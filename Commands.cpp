@@ -346,7 +346,7 @@ void FGCommand::execute()
 
     if (!job->getIsStopped())
     {
-        this->jobs_list->removeJobByID(job->getJobID());
+        this->jobs_list->removeJob(job->getJobID());
     }
     else
     {
@@ -450,19 +450,19 @@ void KillCommand::execute()
         return;
     }
 
-    if (kill(job->getPid(), 0) != 0) // check for errors as preperation
+    if (kill(job->getPID(), 0) != 0) // check for errors as preperation
     {
         return;
     }
 
-    if (kill(job->getPid(), sigal_number) == -1) // send sig
+    if (kill(job->getPID(), sigal_number) == -1) // send sig
     {
         perror("smash error: kill failed");
     }
     else 
     {
         
-        cout << "signal number " << sigal_number << " was sent to pid " << job->getPid() << endl;
+        cout << "signal number " << sigal_number << " was sent to pid " << job->getPID() << endl;
 
         if (sigal_number == SIGSTOP || sigal_number == SIGTSTP)
         {
@@ -474,11 +474,11 @@ void KillCommand::execute()
         }
         else if (sigal_number == SIGKILL)
         {
-            int child_pid = waitpid(job->getPid(), NULL, 0);
+            int child_pid = waitpid(job->getPID(), NULL, 0);
 
-            if (child_pid == job->getPid())
+            if (child_pid == job->getPID())
             {
-                jobs->removeJob(job->getJobID());
+                this->jobs->removeJob(job->getJobID());
             }
             else if (child_pid == -1)
             {
@@ -535,6 +535,7 @@ void JobsList::addJobToList(Job* j)
   }
 
 
+
 void JobsList::removeJob(int job_id)
 {
     for (int i = 0; i < (int)this->list.size(); i++)
@@ -580,23 +581,6 @@ Job* JobsList::getLastJob(int* last_job_id)
 }
 
 
-void JobsList::removeJobByID(int job_id)
-{
-    Job* target = nullptr;
-
-    for (int i = 0; i < (int)this->getListSize(); i++)
-    {
-        if (list[i]->getJobID() == job_id)
-        {
-            target = list[i];
-            list.erase(list.begin() + i);
-
-            delete(target);
-
-            break;
-        }
-    }
-}
 
 
 void JobsList::printJobsList()
