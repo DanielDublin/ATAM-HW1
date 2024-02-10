@@ -147,27 +147,6 @@ class JobsList{
   void killAllJobs();
 };
 
-/*
-class JobsList {
- public:
-  class JobEntry {
-   // TODO: Add your data members
-  };
- // TODO: Add your data members
- public:
-  JobsList();
-  ~JobsList();
-  void addJob(Command* cmd, bool isStopped = false);
-  void printJobsList();
-  void killAllJobs();
-  void removeFinishedJobs();
-  JobEntry * getJobById(int jobId);
-  void removeJobById(int jobId);
-  JobEntry * getLastJob(int* lastJobId);
-  JobEntry *getLastStoppedJob(int *jobId);
-  // TODO: Add extra methods or modify exisitng ones as needed
-};
-*/
 
 
 /*--------------------Built-in commands-----------------------------*/
@@ -179,7 +158,6 @@ public:
     virtual ~ChromptCommand() = default;
     void execute() override;
 };
-
 
 
 class ShowPidCommand : public Command {
@@ -315,11 +293,6 @@ class SmallShell {
   }
   ~SmallShell();
   void executeCommand(string cmd_line);
-  // TODO: add extra methods as needed
-
-  //////////////////////
-  // our code
-  //////////////////////
 
   private:
   int smash_pid;
