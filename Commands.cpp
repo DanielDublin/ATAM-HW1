@@ -242,6 +242,7 @@ ShowPidCommand::ShowPidCommand(CommandParser parsed_command) : Command(parsed_co
 CDCommand::CDCommand(CommandParser parsed_command, string& last_dir) : Command(parsed_command), last_dir(last_dir) {}
 PWDCommand::PWDCommand(CommandParser parsed_command) : Command(parsed_command) {}
 JobsCommand::JobsCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command) {}
+FGCommand::FGCommand(CommandParser parsed_command, JobsList* jobs_list) : Command(parsed_command), jobs_list(jobs_list) {}
 QuitCommand::QuitCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command) {}
 
 void ShowPidCommand::execute()

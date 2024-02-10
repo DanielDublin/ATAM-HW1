@@ -188,8 +188,9 @@ public:
 
 
 class CDCommand : public Command {
-    std::string& last_dir;
+
 public:
+    std::string& last_dir;
     CDCommand(CommandParser parsed_command, std::string& last_dir);
     virtual ~CDCommand() = default;
     void execute() override;
@@ -197,8 +198,9 @@ public:
 
 
 class JobsCommand : public Command {
-    JobsList* jobs;
+
 public:
+    JobsList* jobs;
     JobsCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~JobsCommand() = default;
     void execute() override;
@@ -206,17 +208,20 @@ public:
 
 
 class FGCommand : public Command {
-    JobsList* jobs;
+   
 public:
-    FGCommand(CommandParser parsed_command, JobsList* jobs);
+    JobsList* jobs_list;
+
+    FGCommand(CommandParser parsed_command, JobsList* jobs_list);
     virtual ~FGCommand() = default;
     void execute() override;
 };
 
 
 class QuitCommand : public Command {
-    JobsList* jobs;
+
 public:
+    JobsList* jobs;
     QuitCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~QuitCommand() = default;
     void execute() override;
@@ -224,8 +229,9 @@ public:
 
 
 class KillCommand : public Command {
-    JobsList* jobs;
+  
 public:
+    JobsList* jobs;
     KillCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~KillCommand() = default;
     void execute() override;
