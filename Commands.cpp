@@ -263,7 +263,8 @@ void JobsCommand::execute()
 void FGCommand::execute()
 {
     int job_id =-1;
-    Job* job;
+    Job* job = nullptr;
+    string job_description = "" ;
 
 
     if (parsed_command.getWordCount() > 2)
@@ -271,9 +272,7 @@ void FGCommand::execute()
         std::cerr << "smash error: fg: invalid arguments" << std::endl;
         return;
     }
-
-
-    if (parsed_command.getWordCount() == 2)
+    else if (parsed_command.getWordCount() == 2)
     {
         try
         {
@@ -284,6 +283,8 @@ void FGCommand::execute()
             std::cerr << "smash error: fg: invalid arguments" << std::endl;
             return;
         }
+
+
         job = jobs_list->getJobById(job_id);
         if (job == nullptr)
         {
@@ -301,9 +302,9 @@ void FGCommand::execute()
         }
     }
 
-    std::string jobLine("");
-    jobLine.append(job->parsed_command.getRaw()).append(" : ").append(std::to_string(job->processId)).append("\n");
-    std::cout << jobLine;
+    
+    job_description.append(job->parsed_command.getraw()).append(" : ").append(std::to_string(job->processId)).append("\n");
+    cout << job_description;
 
     if (job->isStopped)
     {

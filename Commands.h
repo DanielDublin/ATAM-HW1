@@ -105,6 +105,7 @@ class Job{
   private:
   int jobID = -1;
   Command* command;
+  CommandParser* parsed_command;
   status currentStatus = status::FINISHED;
 
   public:
