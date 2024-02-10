@@ -303,7 +303,7 @@ void FGCommand::execute()
     }
 
     
-    job_description.append(job->parsed_command.getraw()).append(" : ").append(std::to_string(job->processId)).append("\n");
+    job_description.append(job->get.getraw()).append(" : ").append(std::to_string(job->processId)).append("\n");
     cout << job_description;
 
     if (job->isStopped)
@@ -405,6 +405,7 @@ Job::status Job::getCurrentStatus() {return currentStatus;}
 void Job::setCurrentStatus(Job::status status) {currentStatus = status;}
 void Job::setCommand(Command *c) {command = c;}
 Command* Job::getCommand() {return command;}
+CommandParser Job::getParsedCommand() { return this->parsed_command; }
 
 
 

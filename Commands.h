@@ -119,6 +119,8 @@ class Job{
   void setCurrentStatus(Job::status status);
   void setCommand(Command *c);
   Command* getCommand();
+  CommandParser getParsedCommand();
+
 };
 
 
