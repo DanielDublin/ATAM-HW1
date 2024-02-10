@@ -115,6 +115,7 @@ class Job{
   ~Job() = default;
   void setJobID(int id);
   int getJobID();
+  int getPID();
   Job::status getCurrentStatus();
   void setCurrentStatus(Job::status status);
   void setCommand(Command *c);
