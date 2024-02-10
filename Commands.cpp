@@ -245,8 +245,159 @@ QuitCommand::QuitCommand(CommandParser parsed_command, JobsList* jobs) : Command
 
 void ShowPidCommand::execute()
 {
-    cout << "smash pid is " << SmallShell::getInstance().get_Smash_Pid() << endl;
+    std::cout << "smash pid is " << this->getPid() << std::endl;
 }
+
+void PWDCommand::execute()
+{
+    std::cout << SmallShell::getInstance().getPWD() << std::endl;
+}
+
+
+void JobsCommand::execute()
+{
+    SmallShell::getInstance().printJobsList();
+}
+
+void FGCommand::execute()
+{
+    int job_id = -1, job_pid = -1;
+    string job_description = "";
+    Job* job = nullptr;
+    Command* current_command = nullptr;
+
+    // check args
+    if (parsed_command.getWordCount() > 2)
+    {
+        std::cerr << "smash error: fg: invalid arguments" << std::endl;
+        return;
+    }
+    else if (parsed_command.getWordCount() == 2) // get job from list
+    {
+        try
+        {
+            job_id = std::stoi(parsed_command[1]);
+        }
+        catch (std::invalid_argument const& ex)
+        {
+            std::cerr << "smash error: fg: invalid arguments" << std::endl;
+            return;
+        }
+
+
+        job = this->jobs_list->getJobById(job_id);
+        if (job == nullptr)
+        {
+            std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << std::endl;
+            return;
+        }
+    }
+    else // get the highest job (which is the last one on the list)
+    {
+        job = this->jobs_list->getLastJob(&job_id);
+        if (job == nullptr)
+        {
+            std::cerr << "smash error: fg: jobs list is empty" << std::endl;
+            return;
+        }
+    }
+
+
+    job_description.append(job->getParsedCommand().getRawCommanad());
+    job_description.append(" : ").append(std::to_string(job->getPID()));
+    cout << job_description << endl;
+
+
+    if (job->getIsStopped())
+    {
+        if (kill(job->getPID(), 0) != 0)  // check channel for errors
+        {
+            return;
+        }
+
+        if (kill(job->getPID(), SIGCONT) != 0)
+        {
+            perror("smash error: kill failed");
+            return;
+        }
+    }
+
+    job_pid = job->getPID();
+    job->setIsStopped(false);
+    current_command = job->getCommand();
+
+    SmallShell::getInstance().setForegroundCommand(current_command); // force the background process to run in foreground
+
+    if (waitpid(job_pid, NULL, WUNTRACED) == -1)
+    {
+        perror("smash error: wait failed");
+        return;
+    }
+
+    SmallShell::getInstance().setForegroundCommand(); // reset the current foreground command  - not built-in
+
+    if (!job->getIsStopped())
+    {
+        this->jobs_list->removeJobByID(job->getJobID());
+    }
+    else
+    {
+        // job->timeCreated = time(NULL);
+        int a = 0;
+    }
+
+}
+
+void QuitCommand::execute()
+{
+    if (parsed_command.getWordCount() > 1 && parsed_command[1].compare("kill") == 0)
+    {
+        cout << "smash: sending SIGKILL signal to " << SmallShell::getInstance().get_job_list_size() << " jobs:" << endl;
+        SmallShell::getInstance().killAllJobs();
+    }
+
+    exit(0);
+}
+
+void CDCommand::execute()
+{
+    if (parsed_command.getWordCount() < 2)
+    {
+        std::cerr << "smash error:> \"" << parsed_command.getRawCommanad() << "\"" << endl;
+        return;
+    }
+    if (parsed_command.getWordCount() > 2)
+    {
+        std::cerr << "smash error: cd: too many arguments\n";
+        return;
+    }
+    std::string currDir = SmallShell::getInstance().get_curr_dir();
+    if (parsed_command[1].compare("-") == 0)
+    {
+        if (last_dir.compare("") == 0)
+        {
+            std::cerr << "smash error: cd: OLDPWD not set" << endl;
+            return;
+        }
+        if (chdir(last_dir.c_str()) == -1)
+        {
+            perror("smash error: chdir failed");
+            return;
+        }
+        last_dir = currDir;
+    }
+    else if (chdir(parsed_command[1].c_str()) == -1)
+    {
+        perror("smash error: chdir failed");
+        return;
+    }
+    else
+    {
+        last_dir = currDir;
+    }
+}
+
+
 
 
 
@@ -283,10 +434,6 @@ void KillCommand::execute()
         return;
     }
 
-void PWDCommand::execute() 
-{
-    std::cout << SmallShell::getInstance().getPWD() << std::endl;
-}
 
     Job* job = jobs->getJobById(job_id);
 
