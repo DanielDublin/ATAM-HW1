@@ -589,6 +589,15 @@ string SmallShell::getPrompt()
   return this->prompt;
 }
 
+Command* SmallShell::getForegroundCommand()
+{
+    return this->foregroundCommand;
+}
+
+void SmallShell::setForegroundCommand(Command* new_command)
+{
+    this->foregroundCommand = new_command;
+}
 
 
 Command* SmallShell::CreateCommand(string command_line)

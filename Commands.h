@@ -324,6 +324,7 @@ class SmallShell {
   int smash_pid;
   string prompt = "smash";
   string last_dir = "";
+  Command* foregroundCommand;
   JobsList* jobs_list;
   JobsList* time_out_jobs_list;
   const int MAX_NUM_OF_PROCESSES = 100;
@@ -340,6 +341,8 @@ class SmallShell {
   string& get_curr_dir();
   string getPrompt();
   string getPWD();
+  Command* getForegroundCommand();
+  void setForegroundCommand(Command* new_command = nullptr);
   int get_job_list_size();
   void printJobsList();
   void killAllJobs();
