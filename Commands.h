@@ -80,6 +80,7 @@ public:
     Command(CommandParser parsed_command);
     int getPid();
     CommandParser getParsedCommand();
+    void setParsedCommand(CommandParser parsed_command);
 
     virtual ~Command() = default;
     virtual void execute() = 0;
@@ -102,17 +103,15 @@ class Job{
       RUNNING_BG,
       FINISHED
   };
-
   private:
-  int jobID = -1;
+  int jobID = 1;
   int pid;
-  bool is_stopped;
-  Command* command;
+  bool is_stopped = false;
   CommandParser parsed_command;
   status currentStatus = status::FINISHED;
 
   public:
-  Job(int jobID, int pid, Command* command, bool is_stopped);
+  Job(int jobID, int pid, CommandParser parsed_command, bool is_stopped);
   ~Job() = default;
   void setJobID(int id);
   int getJobID();
@@ -122,8 +121,6 @@ class Job{
   void setIsStopped(bool is_stopped);
   Job::status getCurrentStatus();
   void setCurrentStatus(Job::status status);
-  void setCommand(Command *c);
-  Command* getCommand();
   CommandParser getParsedCommand();
 
 };
@@ -245,8 +242,8 @@ public:
 /*-------------------------Special commands-------------------*/
 
 class RedirectionCommand : public Command {
-public:
     string file_path;
+public:
     explicit RedirectionCommand(CommandParser parsed_command);
     virtual ~RedirectionCommand() = default;
     void execute() override;
@@ -274,7 +271,7 @@ public:
     TimeoutCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~TimeoutCommand() = default;
     void execute() override;
-};
+}; 
 
 
 
@@ -322,7 +319,7 @@ class SmallShell {
   void printJobsList();
   void killAllJobs();
   JobsList* getJobsList();
-  int get_smash_pid();
+  //int get_smash_pid();
   string getCurrentDir();
 
 };

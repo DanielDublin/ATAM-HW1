@@ -2,7 +2,9 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <sys/wait.h>
 #include "Commands.h"
 
 using namespace std;
@@ -21,6 +23,11 @@ int Command::getPid()
 CommandParser Command::getParsedCommand()
 {
     return this->parsed_command;
+}
+
+void Command::setParsedCommand(CommandParser parsed_command)
+{
+    this->parsed_command = parsed_command;
 }
 
 
@@ -343,7 +350,7 @@ void FGCommand::execute()
 
     job_pid = job->getPID();
     job->setIsStopped(false);
-    current_command = job->getCommand();
+    current_command->setParsedCommand(job->getParsedCommand());
 
     SmallShell::getInstance().setForegroundCommand(current_command); // force the background process to run in foreground
 
@@ -362,7 +369,8 @@ void FGCommand::execute()
     else
     {
         // job->timeCreated = time(NULL);
-        int a = 0;
+        //int a = 0;
+        ;
     }
 
 }
@@ -508,14 +516,13 @@ void KillCommand::execute()
 }
 
 
-
 /*---------------------------------Special Command----------------------------------------------*/
 
 RedirectionCommand::RedirectionCommand(CommandParser parsed_command) : Command(parsed_command), file_path(parsed_command.getSecondCommand()) {}
 
 void RedirectionCommand::execute()
 {
-    CommandParser::redirectionType redirection = this->.getRedirection();
+    CommandParser::redirectionType redirection = parsed_command.getRedirection();
     int file_FD = -1;
     int mode = std::stoul("0777", nullptr, 8);  //  read, write and execute permissions for the owner 
                                                 // needs an octal value for file perms
@@ -566,10 +573,9 @@ void RedirectionCommand::execute()
 
 
 
-
 //-----------------------------------------------------Job-----------------------------------------------//
-Job::Job(int jobID, int pid, Command* command, bool is_stopped) :
-    jobID(jobID), pid(pid), command(command), parsed_command(command->getParsedCommand()), is_stopped(is_stopped) {}
+Job::Job(int jobID, int pid, CommandParser parsed_command, bool is_stopped) :
+    jobID(jobID), pid(pid), parsed_command(parsed_command), is_stopped(is_stopped) {}
 
 
 
@@ -580,18 +586,23 @@ bool Job::getIsStopped() {return this->is_stopped; }
 void Job::setIsStopped(bool is_stopped) { this->is_stopped = is_stopped; }
 Job::status Job::getCurrentStatus() {return currentStatus;}
 void Job::setCurrentStatus(Job::status status) {currentStatus = status;}
-void Job::setCommand(Command *c) {command = c;}
-Command* Job::getCommand() {return command;}
 void Job::setPID(int pid) { this->pid = pid; }
-void Job::setIsStopped(bool is_stopped) { this->is_stopped = is_stopped; }
-bool Job::getIsStopped() { return this->is_stopped; }
+//void Job::setIsStopped(bool is_stopped) { this->is_stopped = is_stopped; }
+//bool Job::getIsStopped() { return this->is_stopped; }
 CommandParser Job::getParsedCommand() { return this->parsed_command; }
 
 //--------------------------JobsList----------------------------//
-JobsList::~JobsList() {}
-
+JobsList::~JobsList()
+{
+  //no need for deletion here, it causes double free
+  ;
+}
 void JobsList::deleteFinishedJobs()
   {
+    int status;
+    for(unsigned int i = 0; i < list.size(); i++)
+      if (waitpid(list[i]->getPID(), &status, WNOHANG) > 0 || kill(list[i]->getPID(), 0) < 0)
+        list[i]->setCurrentStatus(Job::status::FINISHED);
     for(unsigned int i = 0; i < list.size(); i++)
       if (list[i]->getCurrentStatus() == Job::status::FINISHED)
         list.erase(list.begin() + i);
@@ -600,6 +611,7 @@ void JobsList::deleteFinishedJobs()
       if (list[i]->getJobID() > maxJobID)
         maxJobID = list[i]->getJobID();
   }
+
 void JobsList::addJobToList(Job* target_job)
   {
     JobsList::deleteFinishedJobs();
@@ -662,7 +674,7 @@ void JobsList::printJobsList()
   {
     JobsList::deleteFinishedJobs();
     for(unsigned int i = 0; i < list.size(); i++)
-      cout << "[" << i << "] " << list[i]->getCommand()->getParsedCommand().getRawCommanad() << endl;
+      cout << "[" << list[i]->getJobID() << "] " << list[i]->getParsedCommand().getRawCommanad() << endl;
   }
 
   int JobsList::getListSize() {return list.size();}
@@ -671,10 +683,10 @@ void JobsList::printJobsList()
   void JobsList::killAllJobs()
   {
     JobsList::deleteFinishedJobs();
-    for(int i = 0; i < list.size(); i++)
+    for(unsigned int i = 0; i < list.size(); i++)
       {
-        cout << list[i]->getCommand()->getPid() << ": " << list[i]->getCommand()->getParsedCommand().getRawCommanad() << endl;
-        kill(list[i]->getCommand()->getPid(), SIGKILL);
+        cout << list[i]->getPID() << ": " << list[i]->getParsedCommand().getRawCommanad() << endl;
+        kill(list[i]->getPID(), SIGKILL);
         list[i]->setCurrentStatus(Job::status::FINISHED);
       }
     JobsList::deleteFinishedJobs();
@@ -763,7 +775,7 @@ void SmallShell::setForegroundCommand(Command* new_command)
 }
 
 
-
+/////////////////////////////////////////////////////////  built-in commands /////////////////////////////////////////////////////////
 Command* SmallShell::CreateCommand(string command_line)
 {
     CommandParser processed_command(command_line);
@@ -817,6 +829,73 @@ Command* SmallShell::CreateCommand(string command_line)
     {
         return new QuitCommand(processed_command, nullptr);
     }
+
+    /////////////////////////////////////////////////////////  external commands /////////////////////////////////////////////////////////
+    else if (! (processed_command.getIsComplex()))
+    {
+        int status = 0;
+        int pid = fork();
+        if (pid == 0)
+        {
+            setpgrp(); 
+            char* temp[processed_command.getWordCount() + 1] = {nullptr};
+            for(int i = 0 ; i < processed_command.getWordCount(); i++)
+            {
+                const char* c1 = processed_command[i].c_str();
+                char* c2 = const_cast<char*>(c1);
+                temp[i] = c2;
+            }
+            
+            execvp(temp[0] ,temp);
+        }
+        wait( (int *)1 );
+        Job *j = new Job(1, pid, processed_command, false);
+        j->setCurrentStatus(Job::status::RUNNING_FG);
+        SmallShell::getInstance().getJobsList()->addJobToList(j);
+        if((processed_command.getIsBackground()))
+        {  
+           j->setCurrentStatus(Job::status::RUNNING_BG);
+           return nullptr;
+        }
+        while (wait(&status) > 0);
+        return nullptr;
+	}
+    else //is a complex external command
+    {   
+        int status = 0;
+        int pid = fork();
+        if (pid == 0)
+        {
+            setpgrp();
+            string s1 = "/bin/bash";
+            string s2 = "-c";
+            
+            const char* c1 = s1.c_str();
+            char* c2 = const_cast<char*>(c1);
+
+            const char* c3 = s2.c_str();
+            char* c4 = const_cast<char*>(c3);
+
+            const char* c5 = processed_command.getRawCommanad().c_str();
+            char* c6 = const_cast<char*>(c5);
+
+            char* temp[4] = {c2, c4, c6 , nullptr};
+
+            execvp(temp[0] ,temp);
+        }
+        wait( (int *)1 );
+        Job *j = new Job(1, pid, processed_command, false);
+        j->setCurrentStatus(Job::status::RUNNING_FG);
+        SmallShell::getInstance().getJobsList()->addJobToList(j);
+        if((processed_command.getIsBackground()))
+        {  
+           j->setCurrentStatus(Job::status::RUNNING_BG);
+           return nullptr;
+        }
+        while (wait(&status) > 0);
+        return nullptr;
+    }   
+        
     return nullptr;
   
     
