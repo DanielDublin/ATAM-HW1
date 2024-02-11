@@ -517,7 +517,8 @@ void RedirectionCommand::execute()
 {
     CommandParser::redirectionType redirection = this->.getRedirection();
     int file_FD = -1;
-    int mode = std::stoul("0777", nullptr, 8);  // why
+    int mode = std::stoul("0777", nullptr, 8);  //  read, write and execute permissions for the owner 
+                                                // needs an octal value for file perms
 
     int forked_pid = fork();
     if (forked_pid == 0) // son
@@ -530,7 +531,7 @@ void RedirectionCommand::execute()
 
         if (redirection == CommandParser::OVERRIDE)
         {
-            file_FD = open(this->file_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, mode);
+            file_FD = open(this->file_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, mode); 
         }
         else
         {
@@ -544,12 +545,12 @@ void RedirectionCommand::execute()
             exit(1);
         }
 
-        SmallShell::getInstance().executeCommand(cmdLine.getFirstCommand().c_str());
+        SmallShell::getInstance().executeCommand(parsed_command.getFirstCommand().c_str());
         exit(1);
     }
     else if (forked_pid > 0)
     {
-        if (waitpid(pid1, NULL, WUNTRACED) == -1)
+        if (waitpid(forked_pid, NULL, WUNTRACED) == -1)
         {
             perror("smash error: wait failed");
         }
