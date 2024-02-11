@@ -896,7 +896,6 @@ Command* SmallShell::CreateCommand(string command_line)
         return nullptr;
     }   
         
-
     return nullptr;
   
     
