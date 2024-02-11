@@ -245,8 +245,8 @@ public:
 /*-------------------------Special commands-------------------*/
 
 class RedirectionCommand : public Command {
-    string filePath;
 public:
+    string file_path;
     explicit RedirectionCommand(CommandParser parsed_command);
     virtual ~RedirectionCommand() = default;
     void execute() override;

@@ -508,6 +508,63 @@ void KillCommand::execute()
 }
 
 
+
+/*---------------------------------Special Command----------------------------------------------*/
+
+RedirectionCommand::RedirectionCommand(CommandParser parsed_command) : Command(parsed_command), file_path(parsed_command.getSecondCommand()) {}
+
+void RedirectionCommand::execute()
+{
+    CommandParser::redirectionType redirection = this->.getRedirection();
+    int file_FD = -1;
+    int mode = std::stoul("0777", nullptr, 8);  // why
+
+    int forked_pid = fork();
+    if (forked_pid == 0) // son
+    {
+        if (close(STDOUT_FILENO) < 0) 
+        {
+            perror("smash error: close failed");
+            exit(1);
+        }
+
+        if (redirection == CommandParser::OVERRIDE)
+        {
+            file_FD = open(this->file_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, mode);
+        }
+        else
+        {
+            file_FD = open(this->file_path.c_str(), O_CREAT | O_RDWR | O_APPEND, mode);
+        }
+
+
+        if (file_FD < 0)
+        {
+            perror("smash error: open failed");
+            exit(1);
+        }
+
+        SmallShell::getInstance().executeCommand(cmdLine.getFirstCommand().c_str());
+        exit(1);
+    }
+    else if (forked_pid > 0)
+    {
+        if (waitpid(pid1, NULL, WUNTRACED) == -1)
+        {
+            perror("smash error: wait failed");
+        }
+    }
+    else
+    {
+        perror("smash error: fork failed");
+    }
+
+
+}
+
+
+
+
 //-----------------------------------------------------Job-----------------------------------------------//
 Job::Job(int jobID, int pid, Command* command, bool is_stopped) :
     jobID(jobID), pid(pid), command(command), parsed_command(command->getParsedCommand()), is_stopped(is_stopped) {}
@@ -719,7 +776,20 @@ Command* SmallShell::CreateCommand(string command_line)
 
     string command_name = processed_command[0];
 
-    if (command_name.compare("showpid") == 0) {
+    // redirection
+    if (processed_command.getRedirection() == CommandParser::REDIRECTION_FAIL)
+    {
+        std::cerr << "smash error: redirection: invalid arguments" << std::endl;
+        return nullptr;
+    }
+    else if (processed_command.getRedirection() == CommandParser::OVERRIDE || 
+        processed_command.getRedirection() == CommandParser::APPEND)
+    {
+        return new RedirectionCommand(processed_command);
+    }
+
+    //built-in commands
+    else if (command_name.compare("showpid") == 0) {
         return new ShowPidCommand(processed_command);
     }
     else if (command_name.compare("cd") == 0) {
