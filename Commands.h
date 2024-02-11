@@ -242,7 +242,7 @@ public:
 /*-------------------------Special commands-------------------*/
 
 class RedirectionCommand : public Command {
-    string filePath;
+    string file_path;
 public:
     explicit RedirectionCommand(CommandParser parsed_command);
     virtual ~RedirectionCommand() = default;
