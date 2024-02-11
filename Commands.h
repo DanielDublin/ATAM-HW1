@@ -271,7 +271,7 @@ public:
     TimeoutCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~TimeoutCommand() = default;
     void execute() override;
-};
+}; 
 
 
 
