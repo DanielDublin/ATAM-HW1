@@ -529,16 +529,17 @@ void RedirectionCommand::execute()
             exit(1);
         }
 
+        // check handle type
         if (redirection == CommandParser::OVERRIDE)
         {
-            file_FD = open(this->file_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, mode); 
+            file_FD = open(this->file_path.c_str(), O_RDWR | O_CREAT | O_TRUNC, mode);  // read-write, create, override
         }
         else
         {
-            file_FD = open(this->file_path.c_str(), O_CREAT | O_RDWR | O_APPEND, mode);
+            file_FD = open(this->file_path.c_str(), O_RDWR | O_CREAT | O_APPEND, mode); // read-write, create, append
         }
 
-
+        // handle failed
         if (file_FD < 0)
         {
             perror("smash error: open failed");
@@ -548,14 +549,14 @@ void RedirectionCommand::execute()
         SmallShell::getInstance().executeCommand(parsed_command.getFirstCommand().c_str());
         exit(1);
     }
-    else if (forked_pid > 0)
+    else if (forked_pid > 0)  // father
     {
         if (waitpid(forked_pid, NULL, WUNTRACED) == -1)
         {
             perror("smash error: wait failed");
         }
     }
-    else
+    else   // fork failed
     {
         perror("smash error: fork failed");
     }
@@ -587,11 +588,8 @@ bool Job::getIsStopped() { return this->is_stopped; }
 CommandParser Job::getParsedCommand() { return this->parsed_command; }
 
 //--------------------------JobsList----------------------------//
-JobsList::~JobsList()
-{
-  //no need for deletion here, it causes double free
-  ;
-}
+JobsList::~JobsList() {}
+
 void JobsList::deleteFinishedJobs()
   {
     for(unsigned int i = 0; i < list.size(); i++)
