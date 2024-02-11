@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include "Commands.h"
@@ -515,6 +516,63 @@ void KillCommand::execute()
 }
 
 
+/*---------------------------------Special Command----------------------------------------------*/
+
+RedirectionCommand::RedirectionCommand(CommandParser parsed_command) : Command(parsed_command), file_path(parsed_command.getSecondCommand()) {}
+
+void RedirectionCommand::execute()
+{
+    CommandParser::redirectionType redirection = parsed_command.getRedirection();
+    int file_FD = -1;
+    int mode = std::stoul("0777", nullptr, 8);  //  read, write and execute permissions for the owner 
+                                                // needs an octal value for file perms
+
+    int forked_pid = fork();
+    if (forked_pid == 0) // son
+    {
+        if (close(STDOUT_FILENO) < 0) 
+        {
+            perror("smash error: close failed");
+            exit(1);
+        }
+
+        // check handle type
+        if (redirection == CommandParser::OVERRIDE)
+        {
+            file_FD = open(this->file_path.c_str(), O_RDWR | O_CREAT | O_TRUNC, mode);  // read-write, create, override
+        }
+        else
+        {
+            file_FD = open(this->file_path.c_str(), O_RDWR | O_CREAT | O_APPEND, mode); // read-write, create, append
+        }
+
+        // handle failed
+        if (file_FD < 0)
+        {
+            perror("smash error: open failed");
+            exit(1);
+        }
+
+        SmallShell::getInstance().executeCommand(parsed_command.getFirstCommand().c_str());
+        exit(1);
+    }
+    else if (forked_pid > 0)  // father
+    {
+        if (waitpid(forked_pid, NULL, WUNTRACED) == -1)
+        {
+            perror("smash error: wait failed");
+        }
+    }
+    else   // fork failed
+    {
+        perror("smash error: fork failed");
+    }
+
+
+}
+
+
+
 //-----------------------------------------------------Job-----------------------------------------------//
 Job::Job(int jobID, int pid, CommandParser parsed_command, bool is_stopped) :
     jobID(jobID), pid(pid), parsed_command(parsed_command), is_stopped(is_stopped) {}
@@ -616,7 +674,7 @@ void JobsList::printJobsList()
   {
     JobsList::deleteFinishedJobs();
     for(unsigned int i = 0; i < list.size(); i++)
-      cout << "[" << list[i]->getJobID() << "] " << list[i]->getParsedCommand().getRawCommanad() << "   " <<  list[i]->getPID() << " kill:  "  << kill(list[i]->getPID(), 0) << endl;
+      cout << "[" << list[i]->getJobID() << "] " << list[i]->getParsedCommand().getRawCommanad() << endl;
   }
 
   int JobsList::getListSize() {return list.size();}
@@ -729,7 +787,20 @@ Command* SmallShell::CreateCommand(string command_line)
 
     string command_name = processed_command[0];
 
-    if (command_name.compare("showpid") == 0) {
+    // redirection
+    if (processed_command.getRedirection() == CommandParser::REDIRECTION_FAIL)
+    {
+        std::cerr << "smash error: redirection: invalid arguments" << std::endl;
+        return nullptr;
+    }
+    else if (processed_command.getRedirection() == CommandParser::OVERRIDE || 
+        processed_command.getRedirection() == CommandParser::APPEND)
+    {
+        return new RedirectionCommand(processed_command);
+    }
+
+    //built-in commands
+    else if (command_name.compare("showpid") == 0) {
         return new ShowPidCommand(processed_command);
     }
     else if (command_name.compare("cd") == 0) {
