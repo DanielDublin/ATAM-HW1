@@ -11,7 +11,7 @@ using namespace std;
 
 /*------------------Command--------------------*/
 
-Command::Command(CommandParser parsed_command) : pid(-1), parsed_command(parsed_command)
+Command::Command(CommandParser parsed_command) : pid(getpid()), parsed_command(parsed_command)
 {}
 
 
