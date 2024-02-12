@@ -858,6 +858,7 @@ Command* SmallShell::CreateCommand(string command_line)
         }
         while (wait(&status) > 0);
         return nullptr;
+    }
     else //is a complex external command
     {   
         int status = 0;
