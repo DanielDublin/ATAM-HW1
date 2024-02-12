@@ -848,18 +848,16 @@ Command* SmallShell::CreateCommand(string command_line)
             
             execvp(temp[0] ,temp);
         }
-        wait( (int *)1 );
         Job *j = new Job(1, pid, processed_command, false);
         j->setCurrentStatus(Job::status::RUNNING_FG);
         SmallShell::getInstance().getJobsList()->addJobToList(j);
-        if((processed_command.getIsBackground()))
-        {  
-           j->setCurrentStatus(Job::status::RUNNING_BG);
-           return nullptr;
+        if ((processed_command.getIsBackground()))
+        {
+            j->setCurrentStatus(Job::status::RUNNING_BG);
+            return nullptr;
         }
         while (wait(&status) > 0);
         return nullptr;
-	}
     else //is a complex external command
     {   
         int status = 0;
@@ -883,14 +881,13 @@ Command* SmallShell::CreateCommand(string command_line)
 
             execvp(temp[0] ,temp);
         }
-        wait( (int *)1 );
         Job *j = new Job(1, pid, processed_command, false);
         j->setCurrentStatus(Job::status::RUNNING_FG);
         SmallShell::getInstance().getJobsList()->addJobToList(j);
-        if((processed_command.getIsBackground()))
-        {  
-           j->setCurrentStatus(Job::status::RUNNING_BG);
-           return nullptr;
+        if ((processed_command.getIsBackground()))
+        {
+            j->setCurrentStatus(Job::status::RUNNING_BG);
+            return nullptr;
         }
         while (wait(&status) > 0);
         return nullptr;
