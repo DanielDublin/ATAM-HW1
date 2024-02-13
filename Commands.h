@@ -104,10 +104,10 @@ class Job{
       FINISHED
   };
   private:
+  CommandParser parsed_command;
   int jobID = 1;
   int pid;
-  bool is_stopped = false;
-  CommandParser parsed_command;
+  bool is_stopped;
   status currentStatus = status::FINISHED;
 
   public:

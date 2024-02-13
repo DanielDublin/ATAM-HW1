@@ -291,7 +291,7 @@ void FGCommand::execute()
     int job_id = -1, job_pid = -1;
     string job_description = "";
     Job* job = nullptr;
-    Command* current_command = nullptr;
+    //Command* current_command = nullptr;
 
     //////// fix for order check of args ////////
     if (parsed_command.getWordCount() >= 2)
@@ -465,24 +465,16 @@ void KillCommand::execute()
     string job_id_arg = "";
     Job* job = nullptr;
 
-    if (parsed_command.getWordCount() != 3)  // NEED TO CHECK IF THE ORDER OF ERRORS IS CORRECT - THE PDF IS BS -----------------------------------------------
+    if (parsed_command.getWordCount() < 3)  //check if we first have a job input
     {
         std::cerr << "smash error: kill: invalid arguments" << endl;
         return;
     }
 
-    signal_arg = parsed_command[1];
-    job_id_arg = parsed_command[2];
-
-    if (signal_arg[0] != '-')
-    {
-        std::cerr << "smash error: kill: invalid arguments" << endl;
-        return;
-    }
-
+    //check job only
     try
     {
-        sigal_number = std::stoi(signal_arg.substr(1, signal_arg.length() - 1)); // starting from after -
+        job_id_arg = parsed_command[2];
         job_id = std::stoi(job_id_arg);
     }
     catch (std::invalid_argument const& ex)
@@ -491,7 +483,6 @@ void KillCommand::execute()
         return;
     }
 
-
     job = jobs->getJobById(job_id);
 
     if (job == nullptr) // existance check
@@ -499,6 +490,29 @@ void KillCommand::execute()
         std::cerr << "smash error: kill: job-id " << job_id << " does not exist" << endl;
         return;
     }
+
+    // check invalid input  and type
+    if (parsed_command.getWordCount() > 3)  // check if count > 3
+    {
+        std::cerr << "smash error: kill: invalid arguments" << endl;
+        return;
+    }
+
+
+
+    try
+    {
+        signal_arg = parsed_command[1];
+        sigal_number = std::stoi(signal_arg.substr(1, signal_arg.length() - 1)); // starting from after -
+    }
+    catch (std::invalid_argument const& ex)
+    {
+        std::cerr << "smash error: kill: invalid arguments" << endl;
+        return;
+    }
+
+
+    
 
     if (kill(job->getPID(), 0) != 0) // check for errors as preperation
     {
@@ -852,8 +866,9 @@ Command* SmallShell::CreateCommand(string command_line)
     {
         return nullptr;
     }
-
+   
     string command_name = processed_command[0];
+ 
 
     // redirection
     if (processed_command.getRedirection() == CommandParser::REDIRECTION_FAIL)
@@ -910,7 +925,14 @@ Command* SmallShell::CreateCommand(string command_line)
         if (pid == 0)
         {
             setpgrp(); 
-            char* temp[processed_command.getWordCount() + 1] = {nullptr};
+            
+            
+            int size = processed_command.getWordCount() + 1;
+            char** temp = new char*[size];
+            for (int i = 0; i < size; ++i) {
+                temp[i] = nullptr;
+            }
+
             for(int i = 0 ; i < processed_command.getWordCount(); i++)
             {
                 const char* c1 = processed_command[i].c_str();
@@ -918,6 +940,7 @@ Command* SmallShell::CreateCommand(string command_line)
                 temp[i] = c2;
             }
             execvp(temp[0] ,temp);
+            delete[] temp;
             //perror("execv failed");
             kill(getpid(), SIGKILL);
             return nullptr;
