@@ -579,8 +579,8 @@ void ExternalCommand::execute()
                 temp[i] = c2;
             }
             execvp(temp[0], temp);
-            cout << temp[0] << endl;
-            cout << temp << endl;
+            //cout << temp[0] << endl;
+            //cout << temp << endl;
  
             delete[] temp;
             //perror("execv failed");
@@ -628,8 +628,8 @@ void ExternalCommand::execute()
             char* temp[4] = { c2, c4, c6 , nullptr };
  
             execvp(temp[0], temp);
-            cout << temp[0] << endl;
-            cout << temp << endl;
+            //cout << temp[0] << endl;
+            //cout << temp << endl;
             perror("smash error: execvp failed");
             exit(1);
         }
