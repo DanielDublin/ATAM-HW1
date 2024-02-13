@@ -574,7 +574,7 @@ void ExternalCommand::execute()
  
             for (int i = 0; i < this->getParsedCommand().getWordCount(); i++)
             {
-                const char* c1 = this->getParsedCommand()[i].c_str();
+                const char* c1 = parsed_command[i].c_str();
                 char* c2 = const_cast<char*>(c1);
                 temp[i] = c2;
             }
