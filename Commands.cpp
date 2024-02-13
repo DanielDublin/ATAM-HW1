@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include "Commands.h"
 
 using namespace std;
@@ -292,6 +293,26 @@ void FGCommand::execute()
     Job* job = nullptr;
     Command* current_command = nullptr;
 
+    //////// fix for order check of args ////////
+    if (parsed_command.getWordCount() >= 2)
+    {
+        try
+        {
+            job_id = std::stoi(parsed_command[1]);
+        }
+        catch (std::invalid_argument const& ex)
+        {
+            std::cerr << "smash error: fg: invalid arguments" << endl;
+            return;
+        }
+        job = SmallShell::getInstance().getJobsList()->getJobById(job_id);
+        if (job == nullptr)
+        {
+            std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << endl;
+            return;
+        }
+    }
+    
     // check args
     if (parsed_command.getWordCount() > 2)
     {
@@ -311,7 +332,7 @@ void FGCommand::execute()
         }
 
 
-        job = this->jobs_list->getJobById(job_id);
+        job = SmallShell::getInstance().getJobsList()->getJobById(job_id);
         if (job == nullptr)
         {
             std::cerr << "smash error: fg: job-id " << job_id << " does not exist" << endl;
@@ -320,7 +341,7 @@ void FGCommand::execute()
     }
     else // get the highest job (which is the last one on the list)
     {
-        job = this->jobs_list->getLastJob(&job_id);
+        job = SmallShell::getInstance().getJobsList()->getLastJob(&job_id);
         if (job == nullptr)
         {
             std::cerr << "smash error: fg: jobs list is empty" << endl;
@@ -328,9 +349,9 @@ void FGCommand::execute()
         }
     }
 
-
+    
     job_description.append(job->getParsedCommand().getRawCommanad());
-    job_description.append(" : ").append(std::to_string(job->getPID()));
+    job_description.append(" ").append(std::to_string(job->getPID()));
     cout << job_description << endl;
 
 
@@ -350,9 +371,10 @@ void FGCommand::execute()
 
     job_pid = job->getPID();
     job->setIsStopped(false);
-    current_command->setParsedCommand(job->getParsedCommand());
-
-    SmallShell::getInstance().setForegroundCommand(current_command); // force the background process to run in foreground
+    SmallShell::getInstance().setForegroundCommandJob(job); // force the background process to run in foreground
+    SmallShell::getInstance().executeCommand(job->getParsedCommand().getRawCommanad());
+    //get last job and remove it (was added with executeCommand but is not really background command)
+    SmallShell::getInstance().getJobsList()->removeJob((SmallShell::getInstance().getJobsList()->getLastJob())->getJobID());
 
     if (waitpid(job_pid, NULL, WUNTRACED) == -1)
     {
@@ -360,11 +382,11 @@ void FGCommand::execute()
         return;
     }
 
-    SmallShell::getInstance().setForegroundCommand(); // reset the current foreground command  - not built-in
+    SmallShell::getInstance().setForegroundCommandJob(nullptr); // reset the current foreground command  - not built-in
 
     if (!job->getIsStopped())
     {
-        this->jobs_list->removeJob(job->getJobID());
+        SmallShell::getInstance().getJobsList()->removeJob(job->getJobID());
     }
     else
     {
@@ -381,6 +403,7 @@ void QuitCommand::execute()
 {
     if (parsed_command.getWordCount() > 1 && parsed_command[1].compare("kill") == 0)
     {
+        SmallShell::getInstance().getJobsList()->deleteFinishedJobs();
         cout << "smash: sending SIGKILL signal to " << SmallShell::getInstance().get_job_list_size() << " jobs:" << endl;
         SmallShell::getInstance().killAllJobs();
     }
@@ -572,6 +595,31 @@ void RedirectionCommand::execute()
 }
 
 
+ChmodCommand::ChmodCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
+void ChmodCommand::execute()
+{
+    if(parsed_command.getWordCount() != 3)
+    {
+        cerr << "smash error: chmod: invalid arguments" << endl;
+        return;
+    }
+    mode_t m = 0;
+    try
+    {
+        m = stoul(parsed_command[1], nullptr, 8);
+    }
+    catch (std::invalid_argument const& ex)
+    {
+        cerr << "smash error: chmod: invalid arguments" << endl;
+        return;
+    }
+    if (chmod(parsed_command[2].c_str(), m) != 0) 
+    {
+        perror("smash error: chmod failed");
+        return;
+    }
+}
+
 
 //-----------------------------------------------------Job-----------------------------------------------//
 Job::Job(int jobID, int pid, CommandParser parsed_command, bool is_stopped) :
@@ -599,10 +647,14 @@ JobsList::~JobsList()
 }
 void JobsList::deleteFinishedJobs()
   {
-    int status;
+    
     for(unsigned int i = 0; i < list.size(); i++)
-      if (waitpid(list[i]->getPID(), &status, WNOHANG) > 0 || kill(list[i]->getPID(), 0) < 0)
-        list[i]->setCurrentStatus(Job::status::FINISHED);
+    {
+        int status;
+        if (waitpid(list[i]->getPID(), &status, WNOHANG) > 0 || kill(list[i]->getPID(), 0) < 0)
+            list[i]->setCurrentStatus(Job::status::FINISHED);
+    }
+      
     for(unsigned int i = 0; i < list.size(); i++)
       if (list[i]->getCurrentStatus() == Job::status::FINISHED)
         list.erase(list.begin() + i);
@@ -618,24 +670,27 @@ void JobsList::addJobToList(Job* target_job)
     maxJobID++;
     target_job->setJobID(maxJobID);
     list.push_back(target_job);
-
   }
 
 
 
 void JobsList::removeJob(int job_id)
 {
-    for (int i = 0; i < (int)this->list.size(); i++)
+    for (unsigned int i = 0; i < list.size(); i++)
     {
         if (list[i]->getJobID() == job_id)
         {
             Job* target_job = list[i];
-            list.erase(list.begin() + i);
-
             delete(target_job);
-            break;
+            list.erase(list.begin() + i);
+            //break;
         }
     }
+    
+    maxJobID = 0;
+    for(unsigned int i = 0; i < list.size(); i++)
+      if (list[i]->getJobID() > maxJobID)
+        maxJobID = list[i]->getJobID();
 }
 
 
@@ -652,9 +707,9 @@ Job* JobsList::getJobById(int job_id)
 
 Job* JobsList::getLastJob(int* last_job_id)
 {
-    this->deleteFinishedJobs();
+    JobsList::deleteFinishedJobs();
 
-    if (this->list.empty())
+    if (list.empty())
     {
         return nullptr;
     }
@@ -666,6 +721,19 @@ Job* JobsList::getLastJob(int* last_job_id)
 
     return list.back();
 }
+
+Job* JobsList::getLastJob()
+{
+    JobsList::deleteFinishedJobs();
+
+    if (list.empty())
+    {
+        return nullptr;
+    }
+
+    return list.back();
+}
+
 
 
 
@@ -764,14 +832,14 @@ string SmallShell::getPrompt()
   return this->prompt;
 }
 
-Command* SmallShell::getForegroundCommand()
+Job* SmallShell::getForegroundCommandJob()
 {
-    return this->foregroundCommand;
+    return this->foregroundCommandJob;
 }
 
-void SmallShell::setForegroundCommand(Command* new_command)
+void SmallShell::setForegroundCommandJob(Job* job)
 {
-    this->foregroundCommand = new_command;
+    this->foregroundCommandJob = job;
 }
 
 
@@ -829,6 +897,10 @@ Command* SmallShell::CreateCommand(string command_line)
     {
         return new QuitCommand(processed_command, nullptr);
     }
+    else if (command_name.compare("chmod") == 0) 
+    {
+    return new ChmodCommand(processed_command, nullptr);
+    } 
 
     /////////////////////////////////////////////////////////  external commands /////////////////////////////////////////////////////////
     else if (! (processed_command.getIsComplex()))
@@ -845,19 +917,29 @@ Command* SmallShell::CreateCommand(string command_line)
                 char* c2 = const_cast<char*>(c1);
                 temp[i] = c2;
             }
-            
             execvp(temp[0] ,temp);
+            //perror("execv failed");
+            kill(getpid(), SIGKILL);
+            return nullptr;
+            
+            
         }
+        
         Job *j = new Job(1, pid, processed_command, false);
         j->setCurrentStatus(Job::status::RUNNING_FG);
-        SmallShell::getInstance().getJobsList()->addJobToList(j);
         if ((processed_command.getIsBackground()))
         {
             j->setCurrentStatus(Job::status::RUNNING_BG);
+            SmallShell::getInstance().getJobsList()->addJobToList(j);
             return nullptr;
         }
-        while (wait(&status) > 0);
-        return nullptr;
+        else
+        {
+            SmallShell::getInstance().setForegroundCommandJob(j);
+            while(waitpid(pid, &status, WUNTRACED) > 0);
+            return nullptr;
+        } 
+        
     }
     else //is a complex external command
     {   
@@ -881,17 +963,25 @@ Command* SmallShell::CreateCommand(string command_line)
             char* temp[4] = {c2, c4, c6 , nullptr};
 
             execvp(temp[0] ,temp);
+            //perror("execv failed");
+            kill(getpid(), SIGKILL);
+            return nullptr;
         }
+
         Job *j = new Job(1, pid, processed_command, false);
         j->setCurrentStatus(Job::status::RUNNING_FG);
-        SmallShell::getInstance().getJobsList()->addJobToList(j);
         if ((processed_command.getIsBackground()))
         {
             j->setCurrentStatus(Job::status::RUNNING_BG);
+            SmallShell::getInstance().getJobsList()->addJobToList(j);
             return nullptr;
         }
-        while (wait(&status) > 0);
-        return nullptr;
+        else
+        {
+            SmallShell::getInstance().setForegroundCommandJob(j);
+            while(waitpid(pid, &status, WUNTRACED) > 0);
+            return nullptr;
+        } 
     }   
         
     return nullptr;
@@ -901,12 +991,11 @@ Command* SmallShell::CreateCommand(string command_line)
 void SmallShell::executeCommand(string command_line)
 {
     
-    this->jobs_list->deleteFinishedJobs();
-
+    SmallShell::getInstance().getJobsList()->deleteFinishedJobs();
     Command* command = CreateCommand(command_line);
     if (command != nullptr)
     {
         command->execute();
     }
-  
+
 }
