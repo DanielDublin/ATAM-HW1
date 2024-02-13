@@ -1,28 +1,28 @@
 #ifndef SMASH_COMMAND_H_
 #define SMASH_COMMAND_H_
-
+ 
 #include <vector>
 #include <iostream>
 #include <string>
-
-
+ 
+ 
 #define COMMAND_ARGS_MAX_LENGTH (80)
 #define COMMAND_MAX_ARGS (20)
-
+ 
 using namespace std;
 const string WHITESPACE = " \n\r\t\f\v";
 const string COMPLEX_CHAR = "?*";
-
-
-
-
+ 
+ 
+ 
+ 
 /*---------------------CommandParser--------------------------*/
-
-
+ 
+ 
 class CommandParser
 {
     public:
-
+ 
         enum redirectionType
         {
             NONE,
@@ -32,30 +32,30 @@ class CommandParser
             ERROR_PIPE, // |&
             REDIRECTION_FAIL = -1
         };
-
+ 
         CommandParser() = delete;
         CommandParser(string input);
         ~CommandParser() = default;
-
+ 
         string getRawCommanad();
         string getFirstCommand();
         string getSecondCommand();
         string getCleanCommand();
-
+ 
         bool getIsBackground();
         bool getIsComplex();
         int getWordCount();
         int getTimeout();
         redirectionType getRedirection();
-
-
+ 
+ 
         string& operator[](int index);
-
+ 
     private:      
-
+ 
         const static int TIMEOUT_ARG_COUNT = 2;
         static const int MAX_WORD_COUNT = 21;  // Command + 20 args
-
+ 
         string raw_command;
         string first_command;
         string second_command;
@@ -67,34 +67,34 @@ class CommandParser
         bool is_complex;
         int word_count;
         int timeout;
-
+ 
         static string cleanBackgroundCommand(string input);
 };
-
-
+ 
+ 
 /*---------------------Command--------------------------*/
 class Command {
-
+ 
 public:
-
+ 
     Command(CommandParser parsed_command);
     int getPid();
     CommandParser getParsedCommand();
     void setParsedCommand(CommandParser parsed_command);
-
+ 
     virtual ~Command() = default;
     virtual void execute() = 0;
    
-
+ 
 protected:
     int pid;
     CommandParser parsed_command;
     
 };
-
-
-
-
+ 
+ 
+ 
+ 
 //--------------------------Job----------------------------------//
 class Job{
   public:
@@ -109,7 +109,7 @@ class Job{
   int pid;
   bool is_stopped;
   status currentStatus = status::FINISHED;
-
+ 
   public:
   Job(int jobID, int pid, CommandParser parsed_command, bool is_stopped);
   ~Job() = default;
@@ -122,16 +122,16 @@ class Job{
   Job::status getCurrentStatus();
   void setCurrentStatus(Job::status status);
   CommandParser getParsedCommand();
-
+ 
 };
-
-
+ 
+ 
 //--------------------------JobsList----------------------------//
 class JobsList{
   private:
   vector<Job*> list;
   int maxJobID = 0;
-
+ 
   public:
   JobsList() = default;
   ~JobsList();
@@ -145,77 +145,77 @@ class JobsList{
   int getListSize();
   void killAllJobs();
 };
-
-
-
+ 
+ 
+ 
 /*--------------------Built-in commands-----------------------------*/
-
-
+ 
+ 
 class ChromptCommand : public Command {
 public:
     ChromptCommand(CommandParser parsed_command);
     virtual ~ChromptCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
 class ShowPidCommand : public Command {
 public:
     ShowPidCommand(CommandParser parsed_command);
     virtual ~ShowPidCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
 class PWDCommand : public Command {
 public:
     PWDCommand(CommandParser parsed_command);
     virtual ~PWDCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
 class CDCommand : public Command {
-
+ 
 public:
     string& last_dir;
     CDCommand(CommandParser parsed_command, string& last_dir);
     virtual ~CDCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
 class JobsCommand : public Command {
-
+ 
 public:
     JobsList* jobs;
     JobsCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~JobsCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
 class FGCommand : public Command {
    
 public:
     JobsList* jobs_list;
-
+ 
     FGCommand(CommandParser parsed_command, JobsList* jobs_list);
     virtual ~FGCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
 class QuitCommand : public Command {
-
+ 
 public:
     JobsList* jobs;
     QuitCommand(CommandParser parsed_command, JobsList* jobs);
     virtual ~QuitCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
 class KillCommand : public Command {
   
 public:
@@ -224,17 +224,26 @@ public:
     virtual ~KillCommand() = default;
     void execute() override;
 };
-
-
-
-
+ 
+ 
+ 
+ 
 /*---------------------------External commands--------------------------------*/
-
-
-
-
+class ExternalCommand : public Command {
+    
+public:
+    JobsList* jobs;
+    //TimeoutList* timeouts;
+ 
+    ExternalCommand(CommandParser parsed_command, JobsList* jobs);
+    virtual ~ExternalCommand() = default;
+    void execute() override;
+};
+ 
+ 
+ 
 /*-------------------------Special commands-------------------*/
-
+ 
 class RedirectionCommand : public Command {
     string file_path;
 public:
@@ -242,15 +251,16 @@ public:
     virtual ~RedirectionCommand() = default;
     void execute() override;
 };
-
+ 
 class PipeCommand : public Command {
 public:
     PipeCommand(CommandParser parsed_command);
     virtual ~PipeCommand() = default;
     void execute() override;
 };
-
-
+ 
+ 
+ 
 class ChmodCommand : public Command {
     JobsList* jobs;
 public:
@@ -258,7 +268,7 @@ public:
     virtual ~ChmodCommand() = default;
     void execute() override;
 };
-
+ 
 class TimeoutCommand : public Command {
     JobsList* jobs;
 public:
@@ -266,9 +276,9 @@ public:
     virtual ~TimeoutCommand() = default;
     void execute() override;
 }; 
-
-
-
+ 
+ 
+ 
 //--------------------------SmallShell------------------------//
 class SmallShell {
   private:
@@ -285,7 +295,7 @@ class SmallShell {
   }
   ~SmallShell();
   void executeCommand(string command_line);
-
+ 
   private:
   int smash_pid;
   string prompt = "smash";
@@ -297,7 +307,7 @@ class SmallShell {
   const int ARGS_MAX = 21;
   const int COMMAND_SIZE_MAX = 80;
   const int PROCESS_NAME_MAX = 50;
-
+ 
   public:
   int get_max_num_of_processes();
   int get_args_max();
@@ -315,10 +325,10 @@ class SmallShell {
   JobsList* getJobsList();
   //int get_smash_pid();
   string getCurrentDir();
-
+ 
 };
-
-
-
-
+ 
+ 
+ 
+ 
 #endif //SMASH_COMMAND_H_
