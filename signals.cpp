@@ -8,23 +8,23 @@ using namespace std;
 
 void ctrlCHandler(int sig_num)
 {
-    Command* fgCommand = SmallShell::getInstance().getForegroundCommand();
+    Job* fgCommandJob = SmallShell::getInstance().getForegroundCommandJob();
     cout << "smash: got ctrl-C" << endl;
 
-    if (fgCommand == nullptr || kill(fgCommand->getPid(), 0) != 0)  // check if the process is able to receive signals
+    if (fgCommandJob == nullptr || kill(fgCommandJob->getPID(), 0) != 0)  // check if the process is able to receive signals
     {
         return;
     }
 
 
-    if (kill(fgCommand->getPid(), SIGKILL) != 0)
+    if (kill(fgCommandJob->getPID(), SIGKILL) != 0)
     {
         perror("smash error: kill failed");
     }
 
 
-    cout << "smash: process " << fgCommand->getPid() << " was killed" << endl;
-    SmallShell::getInstance().getForegroundCommand();
+    cout << "smash: process " << fgCommandJob->getPID() << " was killed" << endl;
+    SmallShell::getInstance().setForegroundCommandJob(nullptr);
 }
 
 void alarmHandler(int sig_num)
