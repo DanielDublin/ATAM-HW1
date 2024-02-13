@@ -566,13 +566,13 @@ void ExternalCommand::execute()
             setpgrp();
  
  
-            int size = this->getParsedCommand().getWordCount() + 1;
+            int size = parsed_command.getWordCount() + 1;
             char** temp = new char* [size];
             for (int i = 0; i < size; ++i) {
                 temp[i] = nullptr;
             }
  
-            for (int i = 0; i < this->getParsedCommand().getWordCount(); i++)
+            for (int i = 0; i < parsed_command.getWordCount(); i++)
             {
                 const char* c1 = parsed_command[i].c_str();
                 char* c2 = const_cast<char*>(c1);
@@ -590,9 +590,9 @@ void ExternalCommand::execute()
  
         }
  
-        Job* j = new Job(1, pid, this->getParsedCommand(), false);
+        Job* j = new Job(1, pid, parsed_command, false);
         j->setCurrentStatus(Job::status::RUNNING_FG);
-        if ((this->getParsedCommand().getIsBackground()))
+        if ((parsed_command.getIsBackground()))
         {
             j->setCurrentStatus(Job::status::RUNNING_BG);
             SmallShell::getInstance().getJobsList()->addJobToList(j);
@@ -622,7 +622,7 @@ void ExternalCommand::execute()
             const char* c3 = s2.c_str();
             char* c4 = const_cast<char*>(c3);
  
-            const char* c5 = this->getParsedCommand().getRawCommanad().c_str();
+            const char* c5 = parsed_command.getRawCommanad().c_str();
             char* c6 = const_cast<char*>(c5);
  
             char* temp[4] = { c2, c4, c6 , nullptr };
@@ -634,9 +634,9 @@ void ExternalCommand::execute()
             exit(1);
         }
  
-        Job* j = new Job(1, pid, this->getParsedCommand(), false);
+        Job* j = new Job(1, pid, parsed_command, false);
         j->setCurrentStatus(Job::status::RUNNING_FG);
-        if ((this->getParsedCommand().getIsBackground()))
+        if ((parsed_command.getIsBackground()))
         {
             j->setCurrentStatus(Job::status::RUNNING_BG);
             SmallShell::getInstance().getJobsList()->addJobToList(j);
@@ -678,11 +678,11 @@ void RedirectionCommand::execute()
         // check handle type
         if (redirection == CommandParser::OVERRIDE)
         {
-            file_FD = open(this->file_path.c_str(), O_RDWR | O_CREAT | O_TRUNC, mode);  // read-write, create, override
+            file_FD = open(parsed_command.getSecondCommand().c_str(), O_RDWR | O_CREAT | O_TRUNC, mode);  // read-write, create, override
         }
         else
         {
-            file_FD = open(this->file_path.c_str(), O_RDWR | O_CREAT | O_APPEND, mode); // read-write, create, append
+            file_FD = open(parsed_command.getSecondCommand().c_str(), O_RDWR | O_CREAT | O_APPEND, mode); // read-write, create, append
         }
  
         // handle failed
@@ -757,7 +757,7 @@ void handle_child_2(CommandParser parsed_command, CommandParser::redirectionType
  
 void PipeCommand::execute()
 {
-    CommandParser::redirectionType redirection = this->parsed_command.getRedirection();
+    CommandParser::redirectionType redirection = parsed_command.getRedirection();
  
     int pipeFD[2];
  
@@ -767,8 +767,8 @@ void PipeCommand::execute()
         return;
     }
     
-    int child_pid_1 = -1;
-    int child_pid_2 = fork();
+    int child_pid_1 = fork();
+    int child_pid_2 = -1;
  
     if (child_pid_1 == 0) // is child
     {
