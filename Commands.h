@@ -140,6 +140,7 @@ class JobsList{
   void removeJob(int job_id);
   Job* getJobById(int jobId);
   Job* getLastJob(int* last_job_id);
+  Job* getLastJob();
   void printJobsList();
   int getListSize();
   void killAllJobs();
@@ -229,14 +230,7 @@ public:
 
 /*---------------------------External commands--------------------------------*/
 
-class ExternalCommand : public Command {
-    JobsList* jobs;
-    JobsList* timeouts;
-public:
-    ExternalCommand(CommandParser parsed_command, JobsList* jobs, JobsList* timeouts);
-    virtual ~ExternalCommand() = default;
-    void execute() override;
-};
+
 
 
 /*-------------------------Special commands-------------------*/
@@ -296,7 +290,7 @@ class SmallShell {
   int smash_pid;
   string prompt = "smash";
   string last_dir = "";
-  Command* foregroundCommand;
+  Job* foregroundCommandJob;
   JobsList* jobs_list;
   JobsList* time_out_jobs_list;
   const int MAX_NUM_OF_PROCESSES = 100;
@@ -313,8 +307,8 @@ class SmallShell {
   string getPrompt();
   void setPrompt(string new_prompt);
   string getPWD();
-  Command* getForegroundCommand();
-  void setForegroundCommand(Command* new_command = nullptr);
+  Job* getForegroundCommandJob();
+  void setForegroundCommandJob(Job* job = nullptr);
   int get_job_list_size();
   void printJobsList();
   void killAllJobs();
