@@ -556,6 +556,9 @@ void KillCommand::execute()
 /*---------------------------------Special Command----------------------------------------------*/
 
 RedirectionCommand::RedirectionCommand(CommandParser parsed_command) : Command(parsed_command), file_path(parsed_command.getSecondCommand()) {}
+PipeCommand::PipeCommand(CommandParser parsed_command) : Command(parsed_command) {}
+ChmodCommand::ChmodCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
+
 
 void RedirectionCommand::execute()
 {
@@ -609,7 +612,112 @@ void RedirectionCommand::execute()
 }
 
 
-ChmodCommand::ChmodCommand(CommandParser parsed_command, JobsList* jobs) : Command(parsed_command), jobs(jobs) {}
+void handle_child_1(CommandParser parsed_command, CommandParser::redirectionType redirection, int* pipeFD)
+{
+    int coutErr = STDOUT_FILENO;
+
+    if (redirection == CommandParser::ERROR_PIPE)
+    {
+        coutErr = STDERR_FILENO;
+    }
+
+    if (close(pipeFD[0]) < 0)
+    {
+        perror("smash error: close failed");
+        exit(1);
+    }
+
+    if (dup2(pipeFD[1], coutErr) != coutErr)
+    {
+        perror("smash error: dup2 failed");
+        exit(1);
+    }
+
+    SmallShell::getInstance().executeCommand(parsed_command.getFirstCommand().c_str());
+    exit(0);
+}
+
+
+void handle_child_2(CommandParser parsed_command, CommandParser::redirectionType redirection, int* pipeFD)
+{
+    if (close(pipeFD[1]) < 0)
+    {
+        perror("smash error: close failed");
+        exit(1);
+    }
+
+    if (dup2(pipeFD[0], STDIN_FILENO) != STDIN_FILENO)
+    {
+        perror("smash error: dup2 failed");
+        exit(1);
+    }
+
+    SmallShell::getInstance().executeCommand(parsed_command.getSecondCommand().c_str());
+    exit(0);
+}
+
+void PipeCommand::execute()
+{
+    CommandParser::redirectionType redirection = this->parsed_command.getRedirection();
+
+    int pipeFD[2];
+
+    if (pipe(pipeFD) == -1)
+    {
+        perror("smash error: pipe failed");
+        return;
+    }
+    
+    int child_pid_1 = -1;
+    int child_pid_2 = fork();
+
+    if (child_pid_1 == 0) // is child
+    {
+        handle_child_1(parsed_command, redirection, pipeFD);
+    }
+    else if (child_pid_1 > 0) // father
+    {
+        child_pid_2 = fork();
+
+        if (child_pid_2 == 0) // child
+        {
+            handle_child_2(parsed_command, redirection, pipeFD);
+        }
+        else if (child_pid_2 > 0) // father
+        {
+            if (close(pipeFD[0]) < 0 || close(pipeFD[1]) < 0)
+            {
+                perror("smash error: close failed");
+                return;
+            }
+
+            if (waitpid(child_pid_2, NULL, WUNTRACED) == -1)
+            {
+                perror("smash error: wait failed");
+            }
+
+
+            if (waitpid(child_pid_1, NULL, WUNTRACED) == -1)
+            {
+                perror("smash error: wait failed");
+            }
+            
+        }
+        else
+        {
+            perror("smash error: fork failed");
+        }
+    }
+    else
+    {
+        perror("smash error: fork failed");
+        return;
+    }
+
+}
+
+
+
 void ChmodCommand::execute()
 {
     if(parsed_command.getWordCount() != 3)
@@ -880,6 +988,11 @@ Command* SmallShell::CreateCommand(string command_line)
         processed_command.getRedirection() == CommandParser::APPEND)
     {
         return new RedirectionCommand(processed_command);
+    }
+    else if (processed_command.getRedirection() == CommandParser::PIPE ||
+        processed_command.getRedirection() == CommandParser::ERROR_PIPE)
+    {
+        return new PipeCommand(processed_command);
     }
 
     //built-in commands

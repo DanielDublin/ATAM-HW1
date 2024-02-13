@@ -243,10 +243,10 @@ public:
     void execute() override;
 };
 
-class PipeLineCommand : public Command {
+class PipeCommand : public Command {
 public:
-    PipeLineCommand(CommandParser parsed_command);
-    virtual ~PipeLineCommand() = default;
+    PipeCommand(CommandParser parsed_command);
+    virtual ~PipeCommand() = default;
     void execute() override;
 };
 
